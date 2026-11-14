@@ -1,9 +1,12 @@
 name: Release
-# Bei jedem Tag vX.Y.Z: Version prüfen, Zip bauen, Release mit Zip und Prüfsumme anlegen.
+# Bei jedem Push auf main: Steht im Plugin eine Versionsnummer, zu der es noch kein Release gibt,
+# baut dieser Ablauf die Zip, legt Tag vX.Y.Z und Release mit Zip und Prüfsumme an.
 # Die WordPress-Seite (Plugin VLJ Claude Redaktion) findet das Release und aktualisiert sich selbst.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: ['vlj-claude-redaktion/**', '.github/workflows/release.yml']
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
@@ -11,23 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Version prüfen
+      - name: Version lesen und prüfen
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
           KOPF=$(grep -m1 -oP '^\s*\*\s*Version:\s*\K[0-9.]+' vlj-claude-redaktion/vlj-claude-redaktion.php)
           KONST=$(grep -m1 -oP "define\( 'VLJCR_VERSION', '\K[0-9.]+" vlj-claude-redaktion/vlj-claude-redaktion.php)
-          echo "Tag $TAG, Kopf $KOPF, Konstante $KONST"
-          test "$TAG" = "$KOPF" && test "$TAG" = "$KONST"
+          echo "Kopf $KOPF, Konstante $KONST"
+          test -n "$KOPF" && test "$KOPF" = "$KONST"
           php -l vlj-claude-redaktion/vlj-claude-redaktion.php
-      - name: Zip bauen
-        run: |
-          V="${GITHUB_REF_NAME#v}"
-          zip -qr "vlj-claude-redaktion-$V.zip" vlj-claude-redaktion
-          echo "SHA=$(sha256sum vlj-claude-redaktion-$V.zip | cut -d' ' -f1)" >> "$GITHUB_ENV"
-          echo "ZIP=vlj-claude-redaktion-$V.zip" >> "$GITHUB_ENV"
-      - name: Release anlegen
+          echo "V=$KOPF" >> "$GITHUB_ENV"
+      - name: Gibt es das Release schon?
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          printf 'Version %s\n\nsha256: %s\n' "${GITHUB_REF_NAME#v}" "$SHA" > notes.md
-          gh release create "$GITHUB_REF_NAME" "$ZIP" --title "$GITHUB_REF_NAME" --notes-file notes.md
+          if gh release view "v$V" >/dev/null 2>&1; then echo "NEU=nein" >> "$GITHUB_ENV"; echo "v$V existiert bereits, nichts zu tun."; else echo "NEU=ja" >> "$GITHUB_ENV"; fi
+      - name: Zip bauen und Release anlegen
+        if: env.NEU == 'ja'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ZIP="vlj-claude-redaktion-$V.zip"
+          zip -qr "$ZIP" vlj-claude-redaktion
+          SHA=$(sha256sum "$ZIP" | cut -d' ' -f1)
+          printf 'Version %s\n\nsha256: %s\n' "$V" "$SHA" > notes.md
+          gh release create "v$V" "$ZIP" --target "$GITHUB_SHA" --title "v$V" --notes-file notes.md
