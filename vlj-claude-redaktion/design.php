@@ -189,6 +189,9 @@ function vljcr_design_puffer( $html ) {
 			}
 		}
 
+		// 0. Hinweis „Managed with … by Leo Skull“ in der Fußzeile entfernen (abgeklärt, Nov. 2026).
+		$html = preg_replace( '~<p\b[^>]*>(?:(?!</p>).)*leo-skull(?:(?!</p>).)*</p>~is', '', $html );
+
 		// 1. Hintergrundbilder in den Stilregeln auf eine passende Größe umstellen.
 		$html = preg_replace_callback(
 			'~(\.brz \.(brz-css-[a-z0-9]+)[^{}]*\{[^{}]*?)url\(\s*(["\']?)(' . $basis . '/[^"\')]+\.(?:jpe?g|png|webp))\3\s*\)~i',

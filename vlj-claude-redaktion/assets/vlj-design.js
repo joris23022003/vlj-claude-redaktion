@@ -134,7 +134,6 @@ function fuss(){
  copy=copy.replace(/©\s*\d{4}/,'© '+new Date().getFullYear());
  var adr=ps.filter(function(p){return /c\/o|\d{5}\s/.test(p)&&!/^©/.test(p)});
  var tel=ps.filter(function(p){return /^(Telefon|Fax|E-Mail)/i.test(p)});
- var managed=$$('a',f).filter(function(a){return /leo-skull/i.test(a.href)})[0];
  var weiss=(cfg.logoWeiss||'');
  var ft=el('footer','v-fuss'),w=el('div','v-w');
  var g=el('div','v-fuss-raster');
@@ -151,7 +150,6 @@ function fuss(){
  links.forEach(function(a){rechts.insertAdjacentHTML('beforeend','<a href="'+esc(a.href)+'">'+esc(txt(a))+'</a>')});
  if($('.mhcookie-preferences-toggle')||window.mhCookie){var ck=el('button','v-link-knopf','Datenschutzeinstellungen');ck.type='button';ck.addEventListener('click',function(){var t=$('.mhcookie-preferences-toggle');if(t)t.click()});rechts.appendChild(ck)}
  u.appendChild(el('p','',esc(copy)));u.appendChild(rechts);
- if(managed){var mg=el('p','v-fuss-managed');mg.innerHTML='<a href="'+esc(managed.href)+'" target="_blank" rel="noopener">'+esc(txt(managed))+'</a>';u.appendChild(mg)}
  w.appendChild(u);ft.appendChild(w);app.appendChild(ft);
  var o=el('button','v-oben',I.oben);o.type='button';o.setAttribute('aria-label','Nach oben');
  o.addEventListener('click',function(){window.scrollTo({top:0,behavior:reduce?'auto':'smooth'})});app.appendChild(o);
