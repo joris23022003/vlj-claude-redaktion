@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VLJ Claude Redaktion
  * Description:       Konnektor für Claude: Claude kann die Website lesen, Entwürfe anlegen, Seiten, Beiträge, Bilder und Menüs ändern. Zugang nur nach Anmeldung mit einem freigeschalteten Microsoft-Konto (Standard: stietenroth@julis-niedersachsen.de). Vor jeder Änderung wird der alte Stand gesichert; alles wird protokolliert.
- * Version:           1.2.1
+ * Version:           1.3.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Joris Stietenroth
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VLJCR_VERSION', '1.2.1' );
+define( 'VLJCR_VERSION', '1.3.0' );
 define( 'VLJCR_NS', 'vlj-claude/v1' );
 define( 'VLJCR_MAX_SICHERUNGEN', 20 );
 define( 'VLJCR_MAX_PROTOKOLL', 300 );
@@ -1151,6 +1151,46 @@ function vljcr_werkzeuge( $zugang ) {
 		),
 	);
 
+	$schreiben[] = array(
+		'name'        => 'optionen_suchen',
+		'description' => 'Sucht Einstellungen (wp_options) für Rechtstexte und Plugin-Inhalte: begriff im Namen und/oder text im Wert (z. B. ein Name aus dem Impressum). Liefert nur Namen, Größe und ob der Konnektor den Wert lesen/ändern darf (nur Rechtstext-Optionen wie eRecht24, nie Schlüssel, Token oder Passwörter).',
+		'inputSchema' => vljcr_schema( array( 'begriff' => array( 'type' => 'string' ), 'text' => array( 'type' => 'string' ) ) ),
+		'annotations' => array( 'readOnlyHint' => true ),
+	);
+	$schreiben[] = array(
+		'name'        => 'option_lesen',
+		'description' => 'Liest eine freigegebene Rechtstext-Option (z. B. von eRecht24) vollständig; verschachtelte, JSON- oder base64-Werte werden aufgeschlüsselt. max_zeichen Standard 30000.',
+		'inputSchema' => vljcr_schema( array( 'name' => array( 'type' => 'string' ), 'max_zeichen' => array( 'type' => 'integer' ) ), array( 'name' ) ),
+		'annotations' => array( 'readOnlyHint' => true ),
+	);
+	$schreiben[] = array(
+		'name'        => 'option_text_ersetzen',
+		'description' => 'Ersetzt Text in einer freigegebenen Rechtstext-Option (z. B. Impressum von eRecht24). Wie text_ersetzen: je Fundort genau einmal außer alle = true, probelauf = true ändert nichts. Vorher Sicherung (option_zuruecksetzen). Hinweis: Bei einer neuen Übertragung aus dem eRecht24-Konto wird der Text dort überschrieben. Nur nach Freigabe.',
+		'inputSchema' => vljcr_schema(
+			array(
+				'name'      => array( 'type' => 'string' ),
+				'suchen'    => array( 'type' => 'string' ),
+				'ersetzen'  => array( 'type' => 'string' ),
+				'alle'      => array( 'type' => 'boolean' ),
+				'probelauf' => array( 'type' => 'boolean' ),
+				'freigabe'  => $freigabe,
+			),
+			array( 'name', 'suchen', 'ersetzen', 'freigabe' )
+		),
+		'annotations' => array( 'destructiveHint' => true ),
+	);
+	$schreiben[] = array(
+		'name'        => 'option_zuruecksetzen',
+		'description' => 'Stellt eine Rechtstext-Option aus einer Sicherung von option_text_ersetzen wieder her (ohne sicherung: die neueste dieser Option). Nur nach Freigabe.',
+		'inputSchema' => vljcr_schema( array( 'name' => array( 'type' => 'string' ), 'sicherung' => array( 'type' => 'string' ), 'freigabe' => $freigabe ), array( 'name', 'freigabe' ) ),
+		'annotations' => array( 'destructiveHint' => true ),
+	);
+	$schreiben[] = array(
+		'name'        => 'plugin_selbst_aktualisieren',
+		'description' => 'Aktualisiert dieses Plugin (VLJ Claude Redaktion) auf das neueste Release aus github.com/' . VLJCR_REPO . ' (mit Prüfsumme), sofern es neuer ist; danach ist es wieder aktiv. nur_pruefen = true meldet nur die verfügbare Version. Nur nach Freigabe.',
+		'inputSchema' => vljcr_schema( array( 'nur_pruefen' => array( 'type' => 'boolean' ), 'freigabe' => $freigabe ), array( 'freigabe' ) ),
+	);
+
 	return array_merge( $lesen, $schreiben );
 }
 
@@ -1192,7 +1232,7 @@ function vljcr_werkzeug_aufrufen( array $params, $zugang ) {
 		return vljcr_text_ergebnis( 'Der ausführende Benutzer darf keine Seiten bearbeiten. Bitte in den Einstellungen einen Redakteur oder Administrator wählen.', true );
 	}
 
-	$schreibend = ! in_array( $name, array( 'website_info', 'inhalte_liste', 'inhalt_lesen', 'menues_lesen', 'medien_liste', 'protokoll_lesen' ), true );
+	$schreibend = ! in_array( $name, array( 'website_info', 'inhalte_liste', 'inhalt_lesen', 'menues_lesen', 'medien_liste', 'protokoll_lesen', 'optionen_suchen', 'option_lesen' ), true );
 	if ( $schreibend && 'entwurf_anlegen' !== $name ) {
 		$fg = isset( $args['freigabe'] ) ? trim( (string) $args['freigabe'] ) : '';
 		if ( '' === $fg ) {
@@ -1874,6 +1914,188 @@ function vljcr_w_zuruecksetzen( $args ) {
 		'sicherung_vorher' => $vorher,
 		'inhalt'           => vljcr_kurz( $n ),
 	);
+}
+
+/* --- Rechtstext-Optionen (eRecht24 u. ä.) --- */
+
+function vljcr_option_erlaubt( $name ) {
+	$name = (string) $name;
+	if ( preg_match( '/(key|token|secret|pass|api|auth|nonce|salt|hash|cred|licen)/i', $name ) ) {
+		return false;
+	}
+	$muster = apply_filters( 'vljcr_option_muster', '/^(erecht24|_erecht24|e_recht24|rechtstext|legal_text)|(imprint|impressum|privacy_policy_text|datenschutz)/i' );
+	return (bool) preg_match( $muster, $name );
+}
+
+function vljcr_w_optionen_suchen( $args ) {
+	global $wpdb;
+	$begriff = isset( $args['begriff'] ) ? trim( (string) $args['begriff'] ) : '';
+	$text    = isset( $args['text'] ) ? trim( (string) $args['text'] ) : '';
+	if ( mb_strlen( $begriff ) < 3 && mb_strlen( $text ) < 3 ) {
+		throw new VLJCR_Fehler( 'begriff oder text mit mindestens 3 Zeichen angeben.' );
+	}
+	$where = array();
+	$werte = array();
+	if ( '' !== $begriff ) {
+		$where[] = 'option_name LIKE %s';
+		$werte[] = '%' . $wpdb->esc_like( $begriff ) . '%';
+	}
+	if ( '' !== $text ) {
+		$where[] = 'option_value LIKE %s';
+		$werte[] = '%' . $wpdb->esc_like( $text ) . '%';
+	}
+	$sql   = "SELECT option_name, LENGTH(option_value) AS laenge, autoload FROM {$wpdb->options} WHERE " . implode( ' AND ', $where ) . ' ORDER BY option_name LIMIT 100';
+	$zeilen = $wpdb->get_results( $wpdb->prepare( $sql, $werte ), ARRAY_A );
+	$out    = array();
+	foreach ( (array) $zeilen as $z ) {
+		if ( 0 === strpos( $z['option_name'], '_transient' ) || 0 === strpos( $z['option_name'], '_site_transient' ) ) {
+			continue;
+		}
+		$out[] = array( 'name' => $z['option_name'], 'zeichen' => (int) $z['laenge'], 'freigegeben' => vljcr_option_erlaubt( $z['option_name'] ) );
+	}
+	$hinweis = ( '' !== $text && ! $out ) ? 'Nicht in den Optionen gefunden. Der Text kommt dann vermutlich bei jedem Aufruf vom Anbieter (z. B. eRecht24-Server) oder steht in einer eigenen Tabelle.' : '';
+	return array( 'treffer' => $out, 'hinweis' => $hinweis );
+}
+
+function vljcr_option_holen( $name ) {
+	$name = (string) $name;
+	if ( ! vljcr_option_erlaubt( $name ) ) {
+		throw new VLJCR_Fehler( 'Diese Option ist für den Konnektor nicht freigegeben (nur Rechtstexte, keine Schlüssel).' );
+	}
+	$wert = get_option( $name, null );
+	if ( null === $wert ) {
+		throw new VLJCR_Fehler( 'Option ' . $name . ' gibt es nicht.' );
+	}
+	return $wert;
+}
+
+function vljcr_aufschluesseln( $wert, $tiefe = 0 ) {
+	if ( is_array( $wert ) ) {
+		$o = array();
+		foreach ( $wert as $k => $v ) {
+			$o[ $k ] = vljcr_aufschluesseln( $v, $tiefe );
+		}
+		return $o;
+	}
+	if ( is_string( $wert ) && $tiefe < 3 ) {
+		$a = ltrim( substr( $wert, 0, 5 ) );
+		if ( '' !== $a && ( '{' === $a[0] || '[' === $a[0] ) && is_array( json_decode( $wert, true ) ) ) {
+			return array( '{json}' => vljcr_aufschluesseln( json_decode( $wert, true ), $tiefe + 1 ) );
+		}
+		if ( strlen( $wert ) >= 40 && preg_match( '/^[A-Za-z0-9+\/]+={0,2}$/', $wert ) ) {
+			$b = base64_decode( $wert, true );
+			if ( false !== $b && mb_check_encoding( $b, 'UTF-8' ) ) {
+				return array( '{base64}' => vljcr_aufschluesseln( $b, $tiefe + 1 ) );
+			}
+		}
+	}
+	return $wert;
+}
+
+function vljcr_w_option_lesen( $args ) {
+	$wert = vljcr_option_holen( $args['name'] );
+	$max  = isset( $args['max_zeichen'] ) ? max( 1000, (int) $args['max_zeichen'] ) : 30000;
+	$text = wp_json_encode( vljcr_aufschluesseln( $wert ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
+	return array( 'name' => (string) $args['name'], 'zeichen' => mb_strlen( $text ), 'wert' => mb_substr( $text, 0, $max ), 'vollstaendig' => mb_strlen( $text ) <= $max );
+}
+
+function vljcr_w_option_text_ersetzen( $args ) {
+	$name   = (string) $args['name'];
+	$wert   = vljcr_option_holen( $name );
+	$suchen = (string) $args['suchen'];
+	if ( '' === $suchen ) {
+		throw new VLJCR_Fehler( 'suchen ist leer.' );
+	}
+	$neu   = $wert;
+	$funde = array();
+	vljcr_tief_ersetzen( $neu, $suchen, (string) $args['ersetzen'], $name, $funde );
+	$treffer = array_sum( $funde );
+	if ( ! $treffer ) {
+		throw new VLJCR_Fehler( 'Text nicht gefunden (HTML-Zeichen wie &amp; oder &nbsp; beachten; mit option_lesen prüfen).' );
+	}
+	$mehrfach = array_filter( $funde, function ( $n ) { return $n > 1; } );
+	$bericht  = array( 'treffer' => $treffer, 'fundorte' => $funde );
+	if ( $mehrfach && empty( $args['alle'] ) ) {
+		$bericht['meldung'] = 'Nicht geändert: Der Text kommt an einem Fundort mehrfach vor. Längeren Ausschnitt wählen oder alle = true.';
+		if ( ! empty( $args['probelauf'] ) ) {
+			return $bericht;
+		}
+		throw new VLJCR_Fehler( $bericht['meldung'] );
+	}
+	if ( ! empty( $args['probelauf'] ) ) {
+		$bericht['meldung'] = 'Probelauf: nichts geändert.';
+		return $bericht;
+	}
+	$sich   = (array) get_option( 'vljcr_option_sicherungen', array() );
+	$schl   = $name . '@' . gmdate( 'YmdHis' ) . '_' . wp_generate_password( 4, false, false );
+	$sich[ $schl ] = array( 'name' => $name, 'zeit' => current_time( 'mysql' ), 'wert' => $wert );
+	if ( count( $sich ) > 30 ) {
+		$sich = array_slice( $sich, -30, null, true );
+	}
+	update_option( 'vljcr_option_sicherungen', $sich, false );
+	update_option( $name, $neu );
+	vljcr_cache_leeren();
+	$bericht['meldung']   = $treffer . ' Stelle(n) in Option ' . $name . ' ersetzt.';
+	$bericht['sicherung'] = $schl;
+	return $bericht;
+}
+
+function vljcr_w_option_zuruecksetzen( $args ) {
+	$name = (string) $args['name'];
+	vljcr_option_holen( $name );
+	$sich = (array) get_option( 'vljcr_option_sicherungen', array() );
+	$eigene = array_filter( $sich, function ( $s ) use ( $name ) { return isset( $s['name'] ) && $s['name'] === $name; } );
+	if ( ! $eigene ) {
+		throw new VLJCR_Fehler( 'Keine Sicherung für ' . $name . '.' );
+	}
+	$schl = ! empty( $args['sicherung'] ) ? (string) $args['sicherung'] : array_key_last( $eigene );
+	if ( ! isset( $eigene[ $schl ] ) ) {
+		throw new VLJCR_Fehler( 'Sicherung gibt es nicht. Vorhanden: ' . implode( ', ', array_keys( $eigene ) ) );
+	}
+	update_option( $name, $eigene[ $schl ]['wert'] );
+	vljcr_cache_leeren();
+	return array( 'meldung' => 'Option ' . $name . ' auf Stand ' . $eigene[ $schl ]['zeit'] . ' zurückgesetzt.' );
+}
+
+/* --- Selbst-Update --- */
+
+function vljcr_w_plugin_selbst_aktualisieren( $args ) {
+	if ( ! current_user_can( 'update_plugins' ) ) {
+		throw new VLJCR_Fehler( 'Der ausführende Benutzer darf keine Plugins aktualisieren.' );
+	}
+	delete_site_transient( 'vljcr_release' );
+	$r = vljcr_release();
+	if ( ! $r ) {
+		throw new VLJCR_Fehler( 'Kein Release auf GitHub gefunden oder GitHub nicht erreichbar.' );
+	}
+	if ( ! version_compare( $r['version'], VLJCR_VERSION, '>' ) ) {
+		return array( 'meldung' => 'Schon aktuell: ' . VLJCR_VERSION . ' (neuestes Release ' . $r['version'] . ').' );
+	}
+	if ( ! empty( $args['nur_pruefen'] ) ) {
+		return array( 'meldung' => 'Verfügbar: ' . $r['version'] . ' (installiert ' . VLJCR_VERSION . ').' );
+	}
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/misc.php';
+	require_once ABSPATH . 'wp-admin/includes/plugin.php';
+	require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+	$ich = plugin_basename( __FILE__ );
+	delete_site_transient( 'update_plugins' );
+	wp_update_plugins();
+	$skin = new Automatic_Upgrader_Skin();
+	$up   = new Plugin_Upgrader( $skin );
+	$erg  = $up->upgrade( $ich );
+	// Wieder aktivieren (WordPress deaktiviert außerhalb des Cron vor dem Update). Die neue Datei wird erst beim nächsten Aufruf geladen.
+	if ( ! is_plugin_active( $ich ) ) {
+		$aktive   = (array) get_option( 'active_plugins', array() );
+		$aktive[] = $ich;
+		update_option( 'active_plugins', array_values( array_unique( $aktive ) ) );
+	}
+	$texte = array_map( 'wp_strip_all_tags', (array) $skin->get_upgrade_messages() );
+	if ( true !== $erg ) {
+		throw new VLJCR_Fehler( 'Update fehlgeschlagen: ' . ( is_wp_error( $erg ) ? $erg->get_error_message() : implode( ' / ', $texte ) ) );
+	}
+	$neu = get_file_data( WP_PLUGIN_DIR . '/' . $ich, array( 'v' => 'Version' ) );
+	return array( 'meldung' => 'Aktualisiert von ' . VLJCR_VERSION . ' auf ' . $neu['v'] . '.', 'schritte' => $texte );
 }
 
 function vljcr_menue_finden( $m ) {
