@@ -56,7 +56,10 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 .v-klein{font-size:14.5px;color:var(--v-grau);line-height:1.6}
 .v-knoepfe{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
 .v-knopf{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:12px 22px;border-radius:4px;background:var(--v-magenta);color:#fff!important;font-size:15.5px;font-weight:500;line-height:1.2;letter-spacing:.005em;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s,transform .2s var(--v-ease);cursor:pointer;text-decoration:none!important}
-.v-knopf svg{width:18px;height:18px;flex:none}
+.v-knopf svg{width:17px;height:17px;flex:none}
+.v-knopf svg.v-i-li{width:15px;height:15px}
+.v-knopf > span,.v-link-knopf > span,.v-mehr{text-box:trim-both cap alphabetic}
+.v-knopf,.v-link-knopf{line-height:1.2}
 .v-knopf:hover{background:var(--v-magenta-2)}
 .v-knopf:active{transform:translateY(1px)}
 .v-knopf.v-umriss{background:transparent;color:var(--v-tief)!important;box-shadow:inset 0 0 0 1.5px var(--v-tief)}
