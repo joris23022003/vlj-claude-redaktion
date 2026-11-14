@@ -208,10 +208,10 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 .v-personen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:56px 32px}
 .v-person{display:grid;grid-template-rows:subgrid;grid-row:span 5;row-gap:0;color:inherit;position:relative}
 .v-foto{position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(160deg,#1f6aa6,#0a3558);clip-path:polygon(0 0,100% 0,100% 100%,14% 100%)}
-.v-foto img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:grayscale(1) contrast(1.05) brightness(1.06);transition:transform .7s var(--v-ease)}
+.v-foto img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:grayscale(1) contrast(1.05) brightness(1.06);transform:translateX(var(--fx,0)) scale(var(--fs,1));transform-origin:50% 30%;transition:transform .7s var(--v-ease)}
 .v-film{position:absolute;inset:0;background:#0b5a96;mix-blend-mode:multiply;opacity:.55;transition:opacity .4s}
 .v-mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:300;color:#fff;letter-spacing:.04em}
-.v-person:hover .v-foto img{transform:scale(1.045)}
+.v-person:hover .v-foto img{transform:translateX(var(--fx,0)) scale(calc(var(--fs,1) * 1.045))}
 .v-person:hover .v-film{opacity:.42}
 .v-rolle{display:flex;align-items:center;margin-top:22px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--v-tief);line-height:1.35}
 .v-rolle .v-strich{width:22px;height:3px;margin-right:10px}
@@ -465,7 +465,8 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
  .v-knopf.v-hell-umriss:hover{background:transparent;color:#fff!important}
  .v-knopf.v-text-link:hover{background:none}
  .v-knopf.v-text-link:hover svg,.v-person:hover .v-mehr svg,.v-profil-navi a:hover svg{transform:none}
- .v-person:hover .v-foto img,.v-galerie-bild:hover img{transform:none}
+ .v-person:hover .v-foto img{transform:translateX(var(--fx,0)) scale(var(--fs,1))}
+ .v-galerie-bild:hover img{transform:none}
  .v-person:hover .v-film{opacity:.55}
  .v-person:hover .v-name{color:var(--v-tief)}
  .v-nav a:not(.v-knopf):hover::after{transform:scaleX(0)}

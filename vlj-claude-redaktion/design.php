@@ -91,6 +91,7 @@ function vljcr_design_profile() {
 	}
 	return array(
 		'Prof. Dr. Stefan Birkner' => array(
+			'foto'     => array( 'x' => '4.5%', 's' => 1.1 ),
 			'linkedin' => 'https://www.linkedin.com/in/stefan-birkner-978373111',
 			'bio'      => 'Stefan Birkner studierte Rechtswissenschaften in Hannover und wurde an der Europa-Universität Viadrina in Frankfurt (Oder) promoviert. Er war Staatsanwalt und Richter, später Staatssekretär und von 2012 bis 2013 Niedersächsischer Minister für Umwelt, Energie und Klimaschutz. Dem Niedersächsischen Landtag gehörte er bis 2022 an.',
 		),

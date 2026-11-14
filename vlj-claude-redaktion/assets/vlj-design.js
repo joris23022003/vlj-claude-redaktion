@@ -393,7 +393,8 @@ function vorstand(){
  leute.forEach(function(p,i){
   var a=el('a','v-person');a.href='#'+p.id;a.setAttribute('aria-label',p.rolle+': '+p.name+' – Profil öffnen');
   var ini=p.name.replace(/^(Prof\.\s*)?(Dr\.\s*)?/,'').split(' ').map(function(x){return x[0]}).join('').slice(0,2);
-  a.innerHTML='<div class="v-foto">'+(p.bild?'<img src="'+esc(p.bild)+'" alt="" loading="lazy">':'<span class="v-mono" aria-hidden="true">'+esc(ini)+'</span>')+'<span class="v-film"></span></div>'+
+  var fp=(p.daten&&p.daten.foto)||null,fst=fp?' style="--fx:'+esc(fp.x||'0')+';--fs:'+esc(String(fp.s||1))+'"':'';
+  a.innerHTML='<div class="v-foto">'+(p.bild?'<img src="'+esc(p.bild)+'" alt="" loading="lazy"'+fst+'>':'<span class="v-mono" aria-hidden="true">'+esc(ini)+'</span>')+'<span class="v-film"></span></div>'+
    '<div class="v-rolle">'+strich()+'<span>'+esc(p.rolle)+'</span></div><h2 class="v-name">'+esc(p.name)+'</h2><p class="v-beruf">'+esc(p.beruf)+'</p><span class="v-mehr">Profil'+I.pfeil+'</span>';
   a.addEventListener('click',function(e){e.preventDefault();profil(leute,i,true)});
   g.appendChild(a);
