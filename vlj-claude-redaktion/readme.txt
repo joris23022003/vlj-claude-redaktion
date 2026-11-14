@@ -1,5 +1,5 @@
 === VLJ Claude Redaktion ===
-Stable tag: 1.4.2
+Stable tag: 1.5.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -31,3 +31,12 @@ baukasten_lesen, baukasten_aendern (ab 1.4.0: Brizy-Elemente strukturiert lesen,
 - Ausschalten: Häkchen "Konnektor eingeschaltet" entfernen oder "Alle Anmeldungen widerrufen".
 - Vor jeder Änderung eine Sicherung (bis 20 je Seite), dazu WordPress-Revisionen und ein Protokoll.
 - Kein Zugriff auf Benutzer, Plugins, Themes oder Einstellungen.
+
+== Design-Upgrade (ab 1.5.0) ==
+Auf allen öffentlichen Seiten (nicht im Brizy-Editor) laden assets/vlj-design.css und assets/vlj-design.js:
+Blocksatz mit Silbentrennung für Fließtext, feste Kopfzeile mit Menü-Knopf auf dem Handy, Karten mit
+Hover-Effekten, sanftes Einblenden, Reiter/Kalender/Galerie auf der Terminseite, Mail-Knöpfe beim Vorstand,
+aufklappbare Satzung, „Nach oben“-Knopf. Die fertige Seite wird nachbearbeitet: passende Bildgrößen (srcset),
+Alternativtexte aus der Mediathek, genau eine h1, saubere Seitenbeschreibung.
+Abschalten: text_ersetzen mit suchen "@design", ersetzen "aus" (wieder an: "an").
+Mail-Adressen der Vorstandskarten: suchen "@design_mails", ersetzen JSON {"Name":"adresse"}.

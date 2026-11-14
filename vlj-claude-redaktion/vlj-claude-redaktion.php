@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VLJ Claude Redaktion
  * Description:       Konnektor für Claude: Claude kann die Website lesen, Entwürfe anlegen, Seiten, Beiträge, Bilder und Menüs ändern. Zugang nur nach Anmeldung mit einem freigeschalteten Microsoft-Konto (Standard: stietenroth@julis-niedersachsen.de). Vor jeder Änderung wird der alte Stand gesichert; alles wird protokolliert.
- * Version:           1.4.2
+ * Version:           1.5.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Joris Stietenroth
@@ -26,13 +26,19 @@
  *   geprüft, ob das Konto noch erlaubt ist. "Alle Anmeldungen widerrufen" sperrt sofort.
  * - Alle Aktionen laufen mit den Rechten des eingestellten WordPress-Benutzers.
  *   Kein Zugriff auf Benutzer, Plugins, Themes oder Einstellungen der Website.
+ * - Ab 1.5.0 zusätzlich das Design-Upgrade der öffentlichen Seiten (design.php, assets/): Blocksatz
+ *   mit Silbentrennung, moderne Bedienung, Reiter und Kalender bei den Terminen, Mail-Knöpfe beim
+ *   Vorstand, passende Bildgrößen. Abschaltbar über die Option vljcr_design.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VLJCR_VERSION', '1.4.2' );
+define( 'VLJCR_VERSION', '1.5.0' );
+
+// Design-Upgrade der öffentlichen Seiten (Stile, Bedienung, Bildgrößen), ab 1.5.0.
+require_once __DIR__ . '/design.php';
 define( 'VLJCR_NS', 'vlj-claude/v1' );
 define( 'VLJCR_MAX_SICHERUNGEN', 20 );
 define( 'VLJCR_MAX_PROTOKOLL', 300 );
@@ -1738,6 +1744,33 @@ function vljcr_w_text_ersetzen( $args ) {
 	$probelauf = ! empty( $args['probelauf'] );
 	if ( '' === $suchen ) {
 		throw new VLJCR_Fehler( 'suchen ist leer.' );
+	}
+	// Design-Upgrade schalten (ab 1.5.0): suchen "@design", ersetzen "an" oder "aus".
+	if ( '@design' === $suchen ) {
+		$an = in_array( strtolower( trim( $neu ) ), array( 'an', 'ein', '1', 'on' ), true );
+		if ( ! $probelauf ) {
+			update_option( 'vljcr_design', $an ? '1' : '0', true );
+			vljcr_cache_leeren();
+		}
+		return array( 'design' => $an ? 'an' : 'aus', 'probelauf' => $probelauf );
+	}
+	// E-Mail-Adressen der Vorstandskarten: suchen "@design_mails", ersetzen JSON {"Name":"adresse", …}.
+	if ( '@design_mails' === $suchen ) {
+		$a = json_decode( $neu, true );
+		if ( ! is_array( $a ) ) {
+			throw new VLJCR_Fehler( 'ersetzen muss ein JSON-Objekt Name => Adresse sein.' );
+		}
+		$m = array();
+		foreach ( $a as $name => $adr ) {
+			if ( is_email( (string) $adr ) ) {
+				$m[ sanitize_text_field( (string) $name ) ] = sanitize_email( (string) $adr );
+			}
+		}
+		if ( ! $probelauf ) {
+			update_option( 'vljcr_vorstand_mails', $m, true );
+			vljcr_cache_leeren();
+		}
+		return array( 'vorstand_mails' => $m, 'probelauf' => $probelauf );
 	}
 	// Ersatzweg (ab 1.4.1) für Sitzungen, deren Werkzeugliste die neuen Baukasten-Werkzeuge noch nicht kennt:
 	// suchen = "@baukasten_lesen" oder "@baukasten_aendern", ersetzen = Argumente als JSON (ohne id).
