@@ -294,3 +294,156 @@ function vljcr_design_puffer( $html ) {
 	}
 	return $html;
 }
+
+/* ---------- Kalenderdatei (.ics) für einen Termin der Terminseite ---------- */
+// Aufruf: /?vlj_kalender=JJJJ-MM-TT. Der Termin wird aus dem Text der Seite „Termine“ gelesen,
+// es lassen sich also nur Termine abrufen, die dort stehen.
+
+function vljcr_design_zeilen( $html ) {
+	$html = preg_replace( '~<(script|style)\b[^>]*>.*?</\1>~is', '', (string) $html );
+	$html = preg_replace( '~<br\s*/?>|</(p|h[1-6]|div|li)>~i', "\n", $html );
+	$t    = html_entity_decode( wp_strip_all_tags( $html, false ), ENT_QUOTES, 'UTF-8' );
+	$t    = str_replace( array( "\xC2\xA0", "\xEF\xBB\xBF", "\xC2\xAD" ), array( ' ', '', '' ), $t );
+	$out  = array();
+	foreach ( preg_split( '/\R/u', $t ) as $z ) {
+		$z = trim( preg_replace( '/\s+/u', ' ', $z ) );
+		if ( '' !== $z ) {
+			$out[] = $z;
+		}
+	}
+	return $out;
+}
+
+function vljcr_design_termin_suchen( array $zeilen, $datum ) {
+	$monate = array( 'januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember' );
+	$titel  = '';
+	$n      = count( $zeilen );
+	for ( $i = 0; $i < $n; $i++ ) {
+		$z = $zeilen[ $i ];
+		if ( preg_match( '/^„.+“$/u', $z ) ) {
+			$titel = trim( $z, '„“ ' );
+			continue;
+		}
+		if ( '' === $titel || ! preg_match( '/(\d{1,2})\.\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s+(\d{4})/iu', $z, $m ) ) {
+			continue;
+		}
+		$d = sprintf( '%04d-%02d-%02d', (int) $m[3], array_search( mb_strtolower( $m[2] ), $monate, true ) + 1, (int) $m[1] );
+		if ( $d !== $datum ) {
+			$titel = '';
+			continue;
+		}
+		$ev = array( 'titel' => $titel, 'datum' => $d, 'von' => '', 'bis' => '', 'ort' => '', 'text' => '' );
+		$rest = mb_substr( $z, mb_strpos( $z, $m[0] ) );
+		if ( preg_match( '/(\d{1,2})[:.](\d{2})(?:\s*[-–]\s*(\d{1,2})[:.](\d{2}))?\s*Uhr/u', $rest, $u ) ) {
+			$ev['von'] = sprintf( '%02d:%02d', $u[1], $u[2] );
+			if ( ! empty( $u[3] ) ) {
+				$ev['bis'] = sprintf( '%02d:%02d', $u[3], $u[4] );
+			}
+		}
+		for ( $j = $i + 1; $j < min( $n, $i + 12 ); $j++ ) {
+			if ( preg_match( '/^„.+“$/u', $zeilen[ $j ] ) ) {
+				break;
+			}
+			if ( '' === $ev['von'] && preg_match( '/(\d{1,2})[:.](\d{2})(?:\s*[-–]\s*(\d{1,2})[:.](\d{2}))?\s*Uhr/u', $zeilen[ $j ], $u ) ) {
+				$ev['von'] = sprintf( '%02d:%02d', $u[1], $u[2] );
+				$ev['bis'] = ! empty( $u[3] ) ? sprintf( '%02d:%02d', $u[3], $u[4] ) : '';
+			}
+			if ( '' === $ev['ort'] && preg_match( '/^Ort:\s*(.+)$/u', $zeilen[ $j ], $o ) ) {
+				$ev['ort'] = $o[1];
+			}
+			if ( '' === $ev['text'] && mb_strlen( $zeilen[ $j ] ) > 60 && ! preg_match( '/^Ort:/u', $zeilen[ $j ] ) ) {
+				$ev['text'] = $zeilen[ $j ];
+			}
+		}
+		return $ev;
+	}
+	return null;
+}
+
+function vljcr_design_ics_text( $s ) {
+	return str_replace( array( '\\', "\n", ',', ';' ), array( '\\\\', '\\n', '\\,', '\;' ), (string) $s );
+}
+
+function vljcr_design_ics_falten( $z ) {
+	$out = array();
+	while ( strlen( $z ) > 74 ) {
+		$teil = mb_strcut( $z, 0, 74, 'UTF-8' );
+		$out[] = $teil;
+		$z     = ' ' . substr( $z, strlen( $teil ) );
+	}
+	$out[] = $z;
+	return implode( "\r\n", $out );
+}
+
+add_action(
+	'template_redirect',
+	function () {
+		if ( ! isset( $_GET['vlj_kalender'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return;
+		}
+		$datum = sanitize_text_field( wp_unslash( $_GET['vlj_kalender'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $datum ) ) {
+			status_header( 400 );
+			exit;
+		}
+		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+			define( 'DONOTCACHEPAGE', true );
+		}
+		$seite = get_page_by_path( 'termine' );
+		$html  = '';
+		if ( $seite ) {
+			$roh = get_post_meta( $seite->ID, 'brizy-compiled-sections', true );
+			if ( is_string( $roh ) && '' !== $roh && function_exists( 'vljcr_bk_auspacken' ) ) {
+				$s = array();
+				$d = vljcr_bk_auspacken( $roh, $s );
+				$d = json_decode( wp_json_encode( $d ), true );
+				if ( is_array( $d ) && ! empty( $d['blocks'] ) ) {
+					foreach ( (array) $d['blocks'] as $b ) {
+						$html .= isset( $b['html'] ) ? (string) $b['html'] : '';
+					}
+				}
+			}
+			if ( '' === $html ) {
+				$html = (string) $seite->post_content;
+			}
+		}
+		$ev = vljcr_design_termin_suchen( vljcr_design_zeilen( $html ), $datum );
+		if ( ! $ev ) {
+			status_header( 404 );
+			header( 'Content-Type: text/plain; charset=utf-8' );
+			echo 'Termin nicht gefunden.';
+			exit;
+		}
+		$tz  = new DateTimeZone( 'Europe/Berlin' );
+		$utc = new DateTimeZone( 'UTC' );
+		$z   = array( 'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//VLJ Niedersachsen//Termine//DE', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT' );
+		$z[] = 'UID:' . $ev['datum'] . '-' . substr( md5( $ev['titel'] ), 0, 10 ) . '@vlj-niedersachsen.de';
+		$z[] = 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' );
+		if ( '' !== $ev['von'] ) {
+			$a   = new DateTime( $ev['datum'] . ' ' . $ev['von'], $tz );
+			$e   = '' !== $ev['bis'] ? new DateTime( $ev['datum'] . ' ' . $ev['bis'], $tz ) : ( clone $a )->modify( '+2 hours' );
+			$z[] = 'DTSTART:' . $a->setTimezone( $utc )->format( 'Ymd\THis\Z' );
+			$z[] = 'DTEND:' . $e->setTimezone( $utc )->format( 'Ymd\THis\Z' );
+		} else {
+			$a   = new DateTime( $ev['datum'], $tz );
+			$z[] = 'DTSTART;VALUE=DATE:' . $a->format( 'Ymd' );
+			$z[] = 'DTEND;VALUE=DATE:' . ( clone $a )->modify( '+1 day' )->format( 'Ymd' );
+		}
+		$url = home_url( '/termine/' );
+		$z[] = 'SUMMARY:' . vljcr_design_ics_text( $ev['titel'] );
+		$z[] = 'DESCRIPTION:' . vljcr_design_ics_text( trim( $ev['text'] . "\n\n" . $url ) );
+		if ( '' !== $ev['ort'] ) {
+			$z[] = 'LOCATION:' . vljcr_design_ics_text( $ev['ort'] );
+		}
+		$z[]  = 'URL:' . $url;
+		$z[]  = 'END:VEVENT';
+		$z[]  = 'END:VCALENDAR';
+		$name = sanitize_file_name( 'VLJ-' . $ev['datum'] . '-' . $ev['titel'] ) . '.ics';
+		nocache_headers();
+		header( 'Content-Type: text/calendar; charset=utf-8' );
+		header( 'Content-Disposition: inline; filename="' . $name . '"' );
+		echo implode( "\r\n", array_map( 'vljcr_design_ics_falten', $z ) ) . "\r\n"; // phpcs:ignore WordPress.Security.EscapeOutput
+		exit;
+	},
+	0
+);

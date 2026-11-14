@@ -36,31 +36,12 @@ function datumAus(t){
  if(z){o.h=+z[1];o.min=+z[2];if(z[3]){o.h2=+z[3];o.min2=+z[4]}}
  return o;
 }
-function letzterSonntag(j,m){var x=new Date(Date.UTC(j,m+1,0));x.setUTCDate(x.getUTCDate()-x.getUTCDay());return x}
-function berlinUtc(j,m,t,h,mi){
- var guess=Date.UTC(j,m,t,h-1,mi),s=letzterSonntag(j,2).getTime()+3600e3,w=letzterSonntag(j,9).getTime()+3600e3;
- var off=(guess>=s&&guess<w)?2:1;return new Date(Date.UTC(j,m,t,h-off,mi));
-}
 function istKommend(o){if(!o)return false;var n=new Date();var ende=new Date(o.j,o.m,o.t,23,59,59);return ende>=n}
-function icsZeit(x){return x.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
-function icsText(s){return String(s).replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/([,;])/g,'\\$1')}
-function icsFalten(z){var out=[];while(z.length>74){out.push(z.slice(0,74));z=' '+z.slice(74)}out.push(z);return out.join('\r\n')}
-function ics(ev){
- var o=ev.datum,L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//VLJ Niedersachsen//Termine//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT'];
- L.push('UID:'+o.j+'-'+(o.m+1)+'-'+o.t+'-'+ev.titel.replace(/[^a-z0-9]/gi,'').slice(0,24).toLowerCase()+'@vlj-niedersachsen.de');
- L.push('DTSTAMP:'+icsZeit(new Date()));
- if(o.h!=null){var a=berlinUtc(o.j,o.m,o.t,o.h,o.min),b=o.h2!=null?berlinUtc(o.j,o.m,o.t,o.h2,o.min2):new Date(a.getTime()+2*3600e3);L.push('DTSTART:'+icsZeit(a),'DTEND:'+icsZeit(b))}
- else{var p=function(n){return(n<10?'0':'')+n},e=new Date(o.j,o.m,o.t+1);L.push('DTSTART;VALUE=DATE:'+o.j+p(o.m+1)+p(o.t),'DTEND;VALUE=DATE:'+e.getFullYear()+p(e.getMonth()+1)+p(e.getDate()))}
- L.push('SUMMARY:'+icsText(ev.titel));
- if(ev.text)L.push('DESCRIPTION:'+icsText(ev.text+'\n\n'+location.origin+'/termine/'));
- if(ev.ort)L.push('LOCATION:'+icsText(ev.ort));
- L.push('URL:'+location.origin+'/termine/','END:VEVENT','END:VCALENDAR');
- return L.map(icsFalten).join('\r\n');
-}
 function kalenderKnopf(ev){
- var a=el('a','vlj-knopf',ICON.kal+'<span>In meinen Kalender</span>');
- a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics(ev));
- a.download=(ev.titel.replace(/[„“"]/g,'').replace(/[^\wäöüÄÖÜß -]/g,'').trim().replace(/\s+/g,'-')||'termin')+'.ics';
+ var a=el('a','vlj-knopf',ICON.kal+'<span>In meinen Kalender</span>'),o=ev.datum,p=function(n){return(n<10?'0':'')+n};
+ // Echte Kalenderdatei vom Server: funktioniert auch auf iPhone und Android (data:-Links blockieren die Handys).
+ a.href=location.origin+'/?vlj_kalender='+o.j+'-'+p(o.m+1)+'-'+p(o.t);
+ a.rel='nofollow';
  return a;
 }
 function teilenKnopf(ev){
