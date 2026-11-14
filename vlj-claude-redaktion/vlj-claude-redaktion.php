@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VLJ Claude Redaktion
  * Description:       Konnektor für Claude: Claude kann die Website lesen, Entwürfe anlegen, Seiten, Beiträge, Bilder und Menüs ändern. Zugang nur nach Anmeldung mit einem freigeschalteten Microsoft-Konto (Standard: stietenroth@julis-niedersachsen.de). Vor jeder Änderung wird der alte Stand gesichert; alles wird protokolliert.
- * Version:           1.2.0
+ * Version:           1.2.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Joris Stietenroth
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VLJCR_VERSION', '1.2.0' );
+define( 'VLJCR_VERSION', '1.2.1' );
 define( 'VLJCR_NS', 'vlj-claude/v1' );
 define( 'VLJCR_MAX_SICHERUNGEN', 20 );
 define( 'VLJCR_MAX_PROTOKOLL', 300 );
@@ -129,8 +129,8 @@ function vljcr_release() {
 			}
 		}
 	}
-	// Erfolg 6 Stunden merken, Fehler 1 Stunde (GitHub-Limit für Aufrufe ohne Anmeldung: 60 je Stunde).
-	set_site_transient( 'vljcr_release', $out, $out['version'] ? 6 * HOUR_IN_SECONDS : HOUR_IN_SECONDS );
+	// Erfolg 6 Stunden merken, Fehler 15 Minuten (GitHub-Limit für Aufrufe ohne Anmeldung: 60 je Stunde).
+	set_site_transient( 'vljcr_release', $out, $out['version'] ? 6 * HOUR_IN_SECONDS : 15 * MINUTE_IN_SECONDS );
 	return $out['version'] ? $out : null;
 }
 
@@ -2056,6 +2056,12 @@ function vljcr_seite() {
 			$konten = isset( $_POST['vljcr_konten'] ) ? sanitize_textarea_field( wp_unslash( $_POST['vljcr_konten'] ) ) : '';
 			update_option( 'vljcr_konten', $konten, false );
 			$meldung = 'Gespeichert.';
+		} elseif ( 'updates' === $aktion ) {
+			delete_site_transient( 'vljcr_release' );
+			delete_site_transient( 'update_plugins' );
+			wp_update_plugins();
+			$r       = vljcr_release();
+			$meldung = $r ? ( version_compare( $r['version'], VLJCR_VERSION, '>' ) ? 'Neue Version ' . $r['version'] . ' gefunden. Sie wird automatisch eingespielt oder unter Dashboard > Aktualisierungen sofort.' : 'Aktuell: ' . VLJCR_VERSION . ' ist die neueste Version.' ) : 'GitHub nicht erreichbar oder noch kein Release vorhanden.';
 		} elseif ( 'widerrufen' === $aktion ) {
 			update_option( 'vljcr_tokens', array(), false );
 			update_option( 'vljcr_clients', array(), false );
@@ -2164,6 +2170,11 @@ function vljcr_seite() {
 				</tr>
 			</table>
 			<?php submit_button( 'Speichern' ); ?>
+		</form>
+		<form method="post" style="margin-bottom:8px">
+			<?php wp_nonce_field( 'vljcr_einstellungen' ); ?>
+			<input type="hidden" name="vljcr_aktion" value="updates">
+			<?php submit_button( 'Jetzt nach Updates suchen (Version ' . VLJCR_VERSION . ')', 'secondary', 'submit', false ); ?>
 		</form>
 		<form method="post">
 			<?php wp_nonce_field( 'vljcr_einstellungen' ); ?>
