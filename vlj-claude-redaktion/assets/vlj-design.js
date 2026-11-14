@@ -408,10 +408,19 @@ function vorstand(){
    '<div class="v-rolle">'+strich()+'<span>'+esc(p.rolle)+'</span></div><h2 class="v-name">'+esc(p.name)+'</h2><p class="v-beruf">'+esc(p.beruf)+'</p><span class="v-mehr">Profil'+I.pfeil+'</span>';
   a.addEventListener('click',function(e){e.preventDefault();profil(leute,i,true)});
   g.appendChild(a);
+  if(p.daten&&p.daten.gx!=null)mittig($('.v-foto img',a),+p.daten.gx,.535);
  });
  w.appendChild(g);
  window.addEventListener('hashchange',function(){var k=leute.findIndex(function(x){return '#'+x.id===location.hash});if(k>-1)profil(leute,k,false);else profilZu(false)});
  var start=leute.findIndex(function(x){return '#'+x.id===location.hash});if(start>-1)setTimeout(function(){profil(leute,start,false)},50);
+}
+// Person waagerecht in die Mitte des sichtbaren Bildausschnitts rücken (nur seitlich, Ausschnitt sonst unverändert)
+function mittig(img,gx,ziel){
+ if(!img||gx==null)return;
+ var f=function(){var b=img.parentNode.getBoundingClientRect(),nw=img.naturalWidth,nh=img.naturalHeight;if(!nw||!b.width)return;
+  var s=Math.max(b.width/nw,b.height/nh),W=nw*s,z=typeof ziel=='function'?ziel():ziel;
+  var ox=Math.min(0,Math.max(b.width-W,b.width*z-gx*W));img.style.objectPosition=ox.toFixed(1)+'px 22%'};
+ if(img.complete)f();img.addEventListener('load',f);window.addEventListener('resize',f);
 }
 var profilEl=null,profilVorher=null;
 function profilZu(hist){
@@ -434,6 +443,7 @@ function profil(leute,i,hist){
   (dat.bio?'<div class="v-profil-bio"><p>'+esc(dat.bio)+'</p></div>':'')+
   '<div class="v-knoepfe"></div>'+
   '<nav class="v-profil-navi" aria-label="Weitere Vorstandsmitglieder"><a href="#'+vor.id+'" class="v-zurueck">'+I.links+'<span><small>Zurück</small>'+esc(vor.name)+'</span></a><a href="#'+nach.id+'" class="v-weiter"><span><small>Weiter</small>'+esc(nach.name)+'</span>'+I.rechts+'</a></nav></div></div>';
+ if(dat.gx!=null)mittig($('.v-profil-bild img',profilEl),+dat.gx,function(){return window.innerWidth<=760?.5:.47});
  var kn=$('.v-knoepfe',profilEl);
  if(p.mail)kn.appendChild(knopf('E-Mail schreiben','mailto:'+p.mail,'',I.mail));
  if(dat.linkedin){var l=knopf('LinkedIn',dat.linkedin,'v-umriss',I.li);l.target='_blank';l.rel='noopener';kn.appendChild(l)}
@@ -569,9 +579,16 @@ function vorlauf(e){
 function buendig(){
  if(!d.createElement('canvas').getContext)return;
  // Erste Zeile jedes Textblocks so einrücken, dass die Tinte des ersten Zeichens genau auf der Kante steht
+$$('[data-vb]').forEach(function(x){x.style.left='';x.removeAttribute('data-vb')});
  $$('.v-held-titel,.v-pfad,.v-h2,.v-h3,.v-unter,.v-name,.v-beruf,.v-mehr,.v-haupt p,.v-haupt li,.v-datum-gross b,.v-datum-gross span,.v-eintrag-datum b,.v-eintrag-datum span,.v-profil-text h2,.v-profil-beruf,.v-profil-bio p,.v-reiter-knopf,.v-par-nr,.v-zl-datum,.v-beitritt-frage,.v-fuss h2,.v-fuss p,.v-toc li').forEach(function(x){
   if(x.closest('.v-knopf'))return;
-  x.style.textIndent='';var v=vorlauf(x);x.style.textIndent=Math.abs(v)>.15?(-v).toFixed(2)+'px':'';
+  // ganzen Block verschieben (nicht nur die erste Zeile), ohne das Layout zu verändern
+  x.style.left='';x.removeAttribute('data-vb');
+  if(x.parentNode&&x.parentNode.closest&&x.parentNode.closest('[data-vb]'))return;
+  var v=vorlauf(x);if(Math.abs(v)<=.15)return;
+  var pos=getComputedStyle(x).position;if(pos!=='static'&&pos!=='relative')return;
+  if(pos==='static')x.style.position='relative';
+  x.style.left=(-v).toFixed(2)+'px';x.setAttribute('data-vb','');
  });
 }
 function buendigSpaeter(){var f=function(){vorlaufCache={};try{buendig()}catch(e){}};

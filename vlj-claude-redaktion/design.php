@@ -83,7 +83,7 @@ add_action(
 	99
 );
 
-// Kurzbiografien und LinkedIn der Vorstandsmitglieder (Option vljcr_vorstand_profile, sonst diese Voreinstellung).
+// Kurzbiografien, LinkedIn und Gesichtsmitte (gx: waagerechte Lage im Foto, 0–1) der Vorstandsmitglieder (Option vljcr_vorstand_profile, sonst diese Voreinstellung).
 function vljcr_design_profile() {
 	$p = get_option( 'vljcr_vorstand_profile', null );
 	if ( is_array( $p ) ) {
@@ -95,11 +95,13 @@ function vljcr_design_profile() {
 			'linkedin' => 'https://www.linkedin.com/in/stefan-birkner-978373111',
 			'bio'      => 'Stefan Birkner studierte Rechtswissenschaften in Hannover und wurde an der Europa-Universität Viadrina in Frankfurt (Oder) promoviert. Er war Staatsanwalt und Richter, später Staatssekretär und von 2012 bis 2013 Niedersächsischer Minister für Umwelt, Energie und Klimaschutz. Dem Niedersächsischen Landtag gehörte er bis 2022 an.',
 		),
-		'Henning Schröder'         => array( 'linkedin' => 'https://www.linkedin.com/in/henning-schr%C3%B6der-84aa7b1' ),
-		'Dr. Frank Rozanski'       => array( 'linkedin' => 'https://www.linkedin.com/in/dr-frank-rozanski' ),
-		'Dr. Johannes Kevekordes'  => array( 'linkedin' => 'https://www.linkedin.com/in/johannes-kevekordes-4814b488' ),
-		'Niklas Drexler'           => array( 'linkedin' => 'https://www.linkedin.com/in/niklas-drexler-442012170' ),
+		'Thomas Pfleiderer'        => array( 'gx' => 0.54 ),
+		'Henning Schröder'         => array( 'gx' => 0.55, 'linkedin' => 'https://www.linkedin.com/in/henning-schr%C3%B6der-84aa7b1' ),
+		'Dr. Frank Rozanski'       => array( 'gx' => 0.552, 'linkedin' => 'https://www.linkedin.com/in/dr-frank-rozanski' ),
+		'Dr. Johannes Kevekordes'  => array( 'gx' => 0.584, 'linkedin' => 'https://www.linkedin.com/in/johannes-kevekordes-4814b488' ),
+		'Niklas Drexler'           => array( 'gx' => 0.526, 'linkedin' => 'https://www.linkedin.com/in/niklas-drexler-442012170' ),
 		'Joris Stietenroth'        => array(
+			'gx'       => 0.498,
 			'linkedin' => 'https://www.linkedin.com/in/joris-stietenroth',
 			'bio'      => 'Joris Stietenroth studiert seit 2023 Rechtswissenschaft an der Universität Hamburg. Er arbeitet in einer Steuerberatungskanzlei und am Lehrstuhl für Europa- und Völkerrecht. Seit 2025 ist er Landesvorsitzender der Jungen Liberalen Niedersachsen.',
 		),

@@ -1,5 +1,5 @@
 === VLJ Claude Redaktion ===
-Stable tag: 1.6.9
+Stable tag: 1.6.10
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GPLv2 or later
