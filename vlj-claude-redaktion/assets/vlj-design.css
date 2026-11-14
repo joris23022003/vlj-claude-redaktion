@@ -40,7 +40,7 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 /* Blocksatz für Fließtext ab ausreichender Spaltenbreite */
 .v-lesen,.v-gruss-text,.v-akt-text,.v-satz,.v-eintrag-text,.v-par-inhalt,.v-zl-text,.v-termin-text,.v-profil-bio,.v-recht-text{container-type:inline-size}
 @container (min-width:300px){
- .v-lesen > p:not(.v-klein),.v-gruss-text p,.v-akt-text > p:not(.v-unter),.v-satz p,.v-eintrag-text p,.v-par-inhalt p,.v-zl-text p,.v-termin-text p,.v-profil-bio p,.v-recht-text .erecht24-legal-texts p:not(:has(br ~ br)){text-align:justify;text-align-last:left}
+ .v-lesen > p:not(.v-klein),.v-gruss-text p,.v-akt-text > p:not(.v-unter),.v-satz p,.v-eintrag-text p,.v-par-inhalt p,.v-zl-text p,.v-profil-bio p,.v-recht-text .erecht24-legal-texts p:not(:has(br ~ br)){text-align:justify;text-align-last:left}
 }
 
 /* Kleine Elemente */
@@ -130,7 +130,8 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 .v-termin-text .v-h3{margin-bottom:10px}
 .v-termin-text p{color:var(--v-grau)}
 .v-termin-aktionen{display:flex;flex-direction:column;gap:12px;min-width:220px}
-.v-zwei-bild{grid-template-columns:1fr 1fr;align-items:center;gap:80px}
+.v-zwei-bild{grid-template-columns:1fr 1fr;align-items:start;gap:80px}
+.v-zwei-bild .v-akt-bilder{margin-top:34px}
 .v-zwei-bild.v-ohne-bild{grid-template-columns:1fr}
 .v-akt-bilder{position:relative;margin-bottom:40px}
 .v-akt-gross{width:100%;aspect-ratio:4/3;object-fit:cover;clip-path:polygon(0 0,100% 0,100% 100%,9% 100%)}
@@ -444,3 +445,4 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
  .v-eintrag[hidden]{display:grid!important}.v-eintrag-text.v-zu-lang{max-height:none!important}
  .v-par{break-inside:avoid}
 }
+.v-app,.v-app *{font-family:var(--v-schrift)!important}
