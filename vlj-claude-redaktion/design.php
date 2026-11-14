@@ -75,6 +75,26 @@ add_action(
 	99
 );
 
+// Versionsangabe an den eigenen Dateien erhalten (die Website entfernt ?ver= sonst), damit Browser neue Stände laden.
+function vljcr_design_version() {
+	$f = plugin_dir_path( __FILE__ ) . 'assets/vlj-design.js';
+	$c = plugin_dir_path( __FILE__ ) . 'assets/vlj-design.css';
+	return substr( md5( VLJCR_VERSION . ( file_exists( $f ) ? filemtime( $f ) : 0 ) . ( file_exists( $c ) ? filemtime( $c ) : 0 ) ), 0, 10 );
+}
+foreach ( array( 'style_loader_src', 'script_loader_src' ) as $vljcr_filter ) {
+	add_filter(
+		$vljcr_filter,
+		function ( $src, $handle ) {
+			if ( 'vljcr-design' === $handle && false === strpos( (string) $src, 'vv=' ) ) {
+				$src = add_query_arg( 'vv', vljcr_design_version(), $src );
+			}
+			return $src;
+		},
+		PHP_INT_MAX,
+		2
+	);
+}
+
 /* ---------- Nachbearbeitung der fertigen Seite ---------- */
 
 add_action(

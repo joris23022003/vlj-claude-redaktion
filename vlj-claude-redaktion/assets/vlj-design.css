@@ -3,11 +3,11 @@
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 ::selection{background:var(--vlj-gelb);color:var(--vlj-blau)}
-.brz .brz-section{scroll-margin-top:90px}
+.brz .brz-section{scroll-margin-top:110px}
 
 /* ---------- Typografie: Blocksatz mit Silbentrennung ---------- */
 .brz .brz-column__items{container-type:inline-size}
-.brz .brz-rich-text p,.brz .brz-rich-text li{-webkit-hyphens:auto;hyphens:auto;hyphenate-limit-chars:7 3 3;-webkit-hyphenate-limit-before:3;-webkit-hyphenate-limit-after:3;text-wrap:pretty;overflow-wrap:break-word}
+.brz .brz-rich-text p,.brz .brz-rich-text li{-webkit-hyphens:auto;hyphens:auto;hyphenate-limit-chars:6 3 2;text-wrap:pretty;overflow-wrap:break-word}
 .brz .brz-rich-text :is(h1,h2,h3,h4,h5,h6){text-wrap:balance;-webkit-hyphens:auto;hyphens:auto;hyphenate-limit-chars:10 4 4}
 @container (min-width:240px){
  .brz .brz-rich-text p:not([class*="brz-tp-lg-heading"]):not([class*="brz-tp-lg-button"]):not([class*="brz-tp-lg-subtitle"]):not([class*="brz-tp-lg-abovetitle"]):not(.vlj-noj){text-align:justify!important;text-align-last:left}
@@ -15,7 +15,11 @@ html{scroll-behavior:smooth}
 }
 
 /* ---------- Kopfzeile ---------- */
-.vlj-ui .brz-section__header{position:sticky;top:0;z-index:999}
+.vlj-ui .brz-section__header{position:fixed!important;top:var(--wp-admin--admin-bar--height,0px);left:0;right:0;width:100%;z-index:999}
+.vlj-ui .brz-root__container{padding-top:var(--vlj-kopfh,0px)}
+.vlj-ui.vlj-scrolled .brz-section__header .brz-image img{transform:scale(.8)}
+@media (min-width:768px){.vlj-ui .brz-section__header .brz-section__menu-item{transition:padding .35s var(--vlj-ease),box-shadow .35s}.vlj-ui.vlj-scrolled .brz-section__header .brz-section__menu-item{padding-top:0!important;padding-bottom:0!important}}
+.vlj-soft .brz-wrapper:has(.brz-btn){margin-top:34px!important}
 .vlj-ui .brz-section__header .brz-section__menu-item{transition:box-shadow .35s,background-color .35s}
 .vlj-ui .brz-section__header .brz-section__menu-item>.brz-bg>.brz-bg-color{background-color:rgba(255,255,255,.94)!important;-webkit-backdrop-filter:saturate(1.4) blur(10px);backdrop-filter:saturate(1.4) blur(10px)}
 .vlj-ui .brz-section__header .brz-container{transition:padding .35s var(--vlj-ease)}

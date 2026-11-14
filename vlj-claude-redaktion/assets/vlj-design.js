@@ -122,6 +122,10 @@ function kopf(){
   d.addEventListener('keydown',function(e){if(e.key==='Escape')zu()});
   d.addEventListener('click',function(e){if(root.classList.contains('vlj-menu-offen')&&!panel.contains(e.target)&&!btn.contains(e.target))zu()});
  }
+ var setH=function(){root.style.setProperty('--vlj-kopfh',h.offsetHeight+'px')};
+ if(!root.classList.contains('vlj-scrolled'))setH();
+ window.addEventListener('resize',function(){if(window.scrollY<12)setH()});
+ if(window.ResizeObserver){var ro=new ResizeObserver(function(){if(window.scrollY<12)setH()});ro.observe(h)}
  var tick=false;
  var upd=function(){root.classList.toggle('vlj-scrolled',window.scrollY>12);var o=$('.vlj-oben');if(o)o.classList.toggle('vlj-zeigen',window.scrollY>700);tick=false};
  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(upd)}},{passive:true});upd();
