@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VLJ Claude Redaktion
  * Description:       Konnektor für Claude: Claude kann die Website lesen, Entwürfe anlegen, Seiten, Beiträge, Bilder und Menüs ändern. Zugang nur nach Anmeldung mit einem freigeschalteten Microsoft-Konto (Standard: stietenroth@julis-niedersachsen.de). Vor jeder Änderung wird der alte Stand gesichert; alles wird protokolliert.
- * Version:           1.4.0
+ * Version:           1.4.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Joris Stietenroth
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VLJCR_VERSION', '1.4.0' );
+define( 'VLJCR_VERSION', '1.4.1' );
 define( 'VLJCR_NS', 'vlj-claude/v1' );
 define( 'VLJCR_MAX_SICHERUNGEN', 20 );
 define( 'VLJCR_MAX_PROTOKOLL', 300 );
@@ -1729,6 +1729,22 @@ function vljcr_w_text_ersetzen( $args ) {
 	$probelauf = ! empty( $args['probelauf'] );
 	if ( '' === $suchen ) {
 		throw new VLJCR_Fehler( 'suchen ist leer.' );
+	}
+	// Ersatzweg (ab 1.4.1) für Sitzungen, deren Werkzeugliste die neuen Baukasten-Werkzeuge noch nicht kennt:
+	// suchen = "@baukasten_lesen" oder "@baukasten_aendern", ersetzen = Argumente als JSON (ohne id).
+	if ( '@baukasten_lesen' === $suchen || '@baukasten_aendern' === $suchen ) {
+		$a = json_decode( $neu, true );
+		if ( ! is_array( $a ) ) {
+			throw new VLJCR_Fehler( 'ersetzen muss die Argumente als JSON enthalten (' . json_last_error_msg() . ').' );
+		}
+		$a['id'] = $args['id'];
+		if ( '@baukasten_lesen' === $suchen ) {
+			return vljcr_w_baukasten_lesen( $a );
+		}
+		if ( $probelauf ) {
+			$a['probelauf'] = true;
+		}
+		return vljcr_w_baukasten_aendern( $a );
 	}
 
 	$funde  = array();
