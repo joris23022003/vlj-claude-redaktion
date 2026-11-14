@@ -158,6 +158,8 @@ function startseite(){
   s.classList.add('vlj-soft');
   cols.forEach(function(c){c.classList.add('vlj-wert');c.style.setProperty('--vlj-akzent',farben[i++%4])});
   $$('.brz-line',s).forEach(function(l){var w=l.closest('.brz-wrapper');if(w)w.classList.add('vlj-weg')});
+  $$('.brz-spacer',s).forEach(function(l){var w=l.closest('.brz-wrapper');if(w)w.classList.add('vlj-weg')});
+  $$('.brz-row__container',s).forEach(function(r){if(!txt(r)&&!$('img,.brz-bg-image,.brz-icon,svg',r)&&r.offsetHeight<30)r.classList.add('vlj-weg')});
  });
  if(akt&&window.fetch&&window.DOMParser){
   fetch('/termine/',{credentials:'same-origin'}).then(function(r){return r.text()}).then(function(h){

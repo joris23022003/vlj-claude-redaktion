@@ -10,8 +10,8 @@ html{scroll-behavior:smooth}
 .brz .brz-rich-text p,.brz .brz-rich-text li{-webkit-hyphens:auto;hyphens:auto;hyphenate-limit-chars:7 3 3;-webkit-hyphenate-limit-before:3;-webkit-hyphenate-limit-after:3;text-wrap:pretty;overflow-wrap:break-word}
 .brz .brz-rich-text :is(h1,h2,h3,h4,h5,h6){text-wrap:balance;-webkit-hyphens:auto;hyphens:auto;hyphenate-limit-chars:10 4 4}
 @container (min-width:240px){
- .brz .brz-rich-text p:is(.brz-tp-lg-paragraph,:not([class*="brz-tp-lg-"])):not(.vlj-noj){text-align:justify!important;text-align-last:left}
- .brz .brz-rich-text p:is(.brz-tp-lg-paragraph,:not([class*="brz-tp-lg-"]))[class*="-center"]:not(.vlj-noj){text-align-last:center}
+ .brz .brz-rich-text p:not([class*="brz-tp-lg-heading"]):not([class*="brz-tp-lg-button"]):not([class*="brz-tp-lg-subtitle"]):not([class*="brz-tp-lg-abovetitle"]):not(.vlj-noj){text-align:justify!important;text-align-last:left}
+ .brz .brz-rich-text p:not([class*="brz-tp-lg-heading"]):not([class*="brz-tp-lg-button"]):not([class*="brz-tp-lg-subtitle"]):not([class*="brz-tp-lg-abovetitle"])[class*="-center"]:not(.vlj-noj){text-align-last:center}
 }
 
 /* ---------- Kopfzeile ---------- */
