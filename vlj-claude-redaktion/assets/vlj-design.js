@@ -142,7 +142,7 @@ function fuss(){
  g.appendChild(c1);
  var c2=el('div','','<h2>Anschrift</h2>'+adr.map(function(a){return '<p>'+esc(a).replace(/^c\/o FDP, /,'c/o FDP<br>')+'</p>'}).join(''));g.appendChild(c2);
  var c3=el('div','','<h2>Kontakt</h2>'+tel.map(function(t){var m=t.match(/^E-Mail:\s*(\S+@\S+)/i);if(m)return '<p>E-Mail: <a href="mailto:'+esc(m[1])+'">'+esc(m[1])+'</a></p>';var tm=t.match(/^Telefon:\s*(.+)$/i);if(tm)return '<p>Telefon: <a href="tel:'+esc(tm[1].replace(/\s+/g,''))+'">'+esc(tm[1])+'</a></p>';return '<p>'+esc(t)+'</p>'}).join(''));g.appendChild(c3);
- var c4=el('div','','<h2>Seiten</h2>');menueEintraege().forEach(function(m){c4.insertAdjacentHTML('beforeend','<p><a href="'+esc(m.h)+'">'+esc(m.t)+'</a></p>')});g.appendChild(c4);
+ var c4=el('div','','<h2>Seiten</h2>');menueEintraege().forEach(function(m){c4.insertAdjacentHTML('beforeend','<p><a href="'+esc(m.h)+'">'+esc(m.t)+'</a></p>')});c4.insertAdjacentHTML('beforeend','<p><a href="'+location.origin+'/mitglied-werden/#satzung">Satzung</a></p>');g.appendChild(c4);
  w.appendChild(g);
  var u=el('div','v-fuss-unten');
  var links=$$('a',f).filter(function(a){return /impressum|datenschutz/i.test(a.href)});
@@ -254,7 +254,7 @@ function startseite(){
     n.text.slice(0,1).forEach(function(p){mitte.appendChild(sauber(p))});
     t.appendChild(mitte);
     var ak=el('div','v-termin-aktionen');ak.appendChild(knopf('In meinen Kalender',kalenderHref(n.datum),'',I.kal));ak.appendChild(knopf('Termine',location.origin+'/termine/#'+n.id,'v-umriss',I.pfeil));t.appendChild(ak);
-    terminW.appendChild(t);terminW.parentNode.hidden=false;
+    terminW.appendChild(t);terminW.parentNode.hidden=false;try{buendig()}catch(e){}
    }
    if(aktInfo){
     var g=gs.filter(function(x){return x.titel===aktInfo.titel})[0];
@@ -307,7 +307,11 @@ function mitglied(){
   if(i===2){hinweis=p;return}
   if(i===3){if(!satzDatum&&/^vom\s/.test(t)){satzDatum=p;return}satzung.push(p)}
  });
- var w=sektion('v-mitglied');
+ var reiterW=sektion('v-mitglied-reiter');
+ var leiste=el('div','v-reiter');leiste.setAttribute('role','tablist');leiste.setAttribute('aria-label','Mitglied werden');
+ [['mitgliedschaft','Mitgliedschaft'],['satzung','Satzung']].forEach(function(x){var bt=el('button','v-reiter-knopf',esc(x[1]));bt.type='button';bt.setAttribute('role','tab');bt.id='reiter-'+x[0];bt.dataset.reiter=x[0];leiste.appendChild(bt)});
+ reiterW.appendChild(leiste);
+ var w=sektion('v-mitglied');w.parentNode.dataset.panel='mitgliedschaft';
  var g=el('div','v-mitglied-raster');
  var links=el('div','v-lesen');
  intro.forEach(function(p){links.appendChild(sauber(p))});
@@ -319,9 +323,9 @@ function mitglied(){
  g.appendChild(box);w.appendChild(g);
  // Satzung
  if(satzKopf){
-  var sw=sektion('v-satzung','satzung');
+  var sw=sektion('v-satzung','satzung-text');sw.parentNode.dataset.panel='satzung';
   var kopfz=el('div','v-satzung-kopf');
-  kopfz.innerHTML='<div>'+marke('Mitglied werden')+'<h2 class="v-h2">'+esc(txt(satzKopf))+'</h2>'+(satzDatum?'<p class="v-unter">'+esc(txt(satzDatum))+'</p>':'')+'</div>';
+  kopfz.innerHTML='<div><h2 class="v-h2">'+esc(txt(satzKopf))+'</h2>'+(satzDatum?'<p class="v-unter">'+esc(txt(satzDatum))+'</p>':'')+'</div>';
   var alle=el('button','v-link-knopf v-alle','Alle aufklappen');alle.type='button';kopfz.appendChild(alle);
   sw.appendChild(kopfz);
   var liste=el('div','v-paragraphen'),det=null,inh=null,schluss=[];
@@ -339,7 +343,18 @@ function mitglied(){
   schluss.forEach(function(p){var c=sauber(p);c.className='v-klein v-satzung-schluss';sw.appendChild(c)});
   var ds=$$('details',liste);
   alle.addEventListener('click',function(){var auf=ds.some(function(x){return !x.open});ds.forEach(function(x){x.open=auf});alle.textContent=auf?'Alle zuklappen':'Alle aufklappen'});
+  var satzLink=el('p','v-klein v-satzung-hinweis');satzLink.innerHTML='<a class="v-link-knopf" href="#satzung">Satzung lesen</a>';box.appendChild(satzLink);
+ }else{leiste.remove()}
+ var panels=$$('[data-panel]',haupt);
+ function zeige(k,user){
+  $$('.v-reiter-knopf',leiste).forEach(function(b){var an=b.dataset.reiter===k;b.setAttribute('aria-selected',an?'true':'false');b.tabIndex=an?0:-1});
+  panels.forEach(function(pn){pn.hidden=pn.dataset.panel!==k});
+  if(user&&history.replaceState)history.replaceState(null,'',k==='satzung'?'#satzung':location.pathname);
  }
+ $$('.v-reiter-knopf',leiste).forEach(function(b){b.addEventListener('click',function(){zeige(b.dataset.reiter,true)})});
+ leiste.addEventListener('keydown',function(e){if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;var bs=$$('.v-reiter-knopf',leiste),i=bs.indexOf(d.activeElement);if(i<0)return;var n=bs[(i+1)%bs.length];n.focus();n.click()});
+ zeige(location.hash==='#satzung'?'satzung':'mitgliedschaft',false);
+ window.addEventListener('hashchange',function(){zeige(location.hash==='#satzung'?'satzung':'mitgliedschaft',false);if(location.hash==='#satzung')leiste.scrollIntoView({block:'start'})});
 }
 
 /* ---------- Impressum / Datenschutz ---------- */
@@ -414,7 +429,7 @@ function profil(leute,i,hist){
  var dat=p.daten||{},vor=leute[(i-1+leute.length)%leute.length],nach=leute[(i+1)%leute.length];
  profilEl.setAttribute('aria-label',p.name);
  profilEl.innerHTML='<div class="v-profil-karte"><button type="button" class="v-profil-zu" aria-label="Schließen">'+I.zu+'</button>'+
-  '<div class="v-profil-bild">'+(p.bild?'<img src="'+esc(p.bild)+'" alt="'+esc(p.name)+'"'+((dat.foto)?' style="--fx:'+esc(dat.foto.x||'0')+';--fs:'+esc(String(dat.foto.s||1))+'"':'')+'>':'<span class="v-mono">'+esc(p.name.replace(/^(Prof\.\s*)?(Dr\.\s*)?/,'').split(' ').map(function(x){return x[0]}).join('').slice(0,2))+'</span>')+'<span class="v-film"></span></div>'+
+  '<div class="v-profil-bild">'+(p.bild?'<img src="'+esc((window.VLJ_GROSS&&window.VLJ_GROSS[p.bild])||p.bild)+'" alt="'+esc(p.name)+'"'+((dat.foto)?' style="--fx:'+esc(dat.foto.x||'0')+';--fs:'+esc(String(dat.foto.s||1))+'"':'')+'>':'<span class="v-mono">'+esc(p.name.replace(/^(Prof\.\s*)?(Dr\.\s*)?/,'').split(' ').map(function(x){return x[0]}).join('').slice(0,2))+'</span>')+'<span class="v-film"></span></div>'+
   '<div class="v-profil-text">'+marke(p.rolle)+'<h2>'+esc(p.name)+'</h2><p class="v-profil-beruf">'+esc(p.beruf)+'</p>'+
   (dat.bio?'<div class="v-profil-bio"><p>'+esc(dat.bio)+'</p></div>':'')+
   '<div class="v-knoepfe"></div>'+
@@ -426,6 +441,7 @@ function profil(leute,i,hist){
  $('.v-profil-zu',profilEl).addEventListener('click',function(){profilZu()});
  $$('.v-profil-navi a',profilEl).forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var k=a.classList.contains('v-zurueck')?(i-1+leute.length)%leute.length:(i+1)%leute.length;profil(leute,k,true)})});
  if(hist!==false&&history.replaceState)history.replaceState(null,'','#'+p.id);
+ try{buendig()}catch(e){}
  setTimeout(function(){var k=profilEl&&$('.v-profil-karte',profilEl);if(k){k.tabIndex=-1;k.focus({preventScroll:true})}},neu?60:0);
 }
 d.addEventListener('keydown',function(e){
@@ -519,6 +535,7 @@ function termine(){
  function zeige(k,user){
   $$('.v-reiter-knopf',leiste).forEach(function(b){var an=b.dataset.reiter===k;b.setAttribute('aria-selected',an?'true':'false');b.tabIndex=an?0:-1});
   var erst=true;gs.forEach(function(g){var an=g.reiter===k;g.box.hidden=!an;g.box.classList.toggle('v-erst',an&&erst);if(an){erst=false;einklappen(g)}});
+  try{buendig()}catch(e){}
   liste.setAttribute('aria-labelledby','reiter-'+k);
   if(user&&history.replaceState)history.replaceState(null,'','#'+k);
  }
@@ -530,6 +547,36 @@ function termine(){
  if(ziel)hinZu(ziel);
  window.addEventListener('hashchange',function(){var hh=location.hash.replace('#',''),z=gs.filter(function(g){return g.id===hh})[0];if(z)hinZu(z);else if(anz[hh])zeige(hh,false)});
 }
+
+/* ---------- Optische Bündigkeit: Leerraum vor dem ersten Zeichen ausgleichen ---------- */
+var messCtx=null;
+var vorlaufCache={};
+function vorlauf(e){
+ var t=(e.textContent||'').replace(/^\s+/,'');if(!t)return 0;
+ var cs=getComputedStyle(e),ch=t.slice(0,1),fs=parseFloat(cs.fontSize)||16,k=8,schl=ch+'|'+cs.fontWeight+'|'+cs.fontStyle+'|'+cs.fontFamily;
+ if(vorlaufCache[schl]==null){
+  var gross=64*k/8*8,c=d.createElement('canvas');c.width=gross*3;c.height=gross*2;var x=c.getContext('2d');
+  x.font=cs.fontStyle+' '+cs.fontWeight+' '+gross+'px '+cs.fontFamily;x.textBaseline='alphabetic';x.fillStyle='#000';
+  var start=gross;x.fillText(ch,start,gross*1.5);
+  var dat=x.getImageData(0,0,c.width,c.height).data,links=-1;
+  for(var px=0;px<c.width&&links<0;px++){for(var py=0;py<c.height;py++){if(dat[(py*c.width+px)*4+3]>40){links=px;break}}}
+  var wert=links<0?0:(links-start)/gross;
+  if(d.fonts&&!d.fonts.check(x.font))return wert*fs;
+  vorlaufCache[schl]=wert;
+ }
+ return vorlaufCache[schl]*fs;
+}
+function buendig(){
+ if(!d.createElement('canvas').getContext)return;
+ // Erste Zeile jedes Textblocks so einrücken, dass die Tinte des ersten Zeichens genau auf der Kante steht
+ $$('.v-held-titel,.v-pfad,.v-h2,.v-h3,.v-unter,.v-name,.v-beruf,.v-mehr,.v-haupt p,.v-haupt li,.v-datum-gross b,.v-datum-gross span,.v-eintrag-datum b,.v-eintrag-datum span,.v-profil-text h2,.v-profil-beruf,.v-profil-bio p,.v-reiter-knopf,.v-par-nr,.v-zl-datum,.v-beitritt-frage,.v-fuss h2,.v-fuss p,.v-toc li').forEach(function(x){
+  if(x.closest('.v-knopf'))return;
+  x.style.textIndent='';var v=vorlauf(x);x.style.textIndent=Math.abs(v)>.15?(-v).toFixed(2)+'px':'';
+ });
+}
+function buendigSpaeter(){var f=function(){vorlaufCache={};try{buendig()}catch(e){}};
+ if(d.fonts&&d.fonts.load){Promise.all(['300','400','italic 400','500','700','900'].map(function(w){return d.fonts.load(w+' 40px "VLJ Roboto"').catch(function(){})})).then(f)}else f();
+ if(d.fonts&&d.fonts.ready)d.fonts.ready.then(f);var t;window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(f,150)})}
 
 /* ---------- Einblenden ---------- */
 function einblenden(){
@@ -547,7 +594,8 @@ function los(){
   geruest();f();fuss();
   root.classList.add('vlj-fertig');
   einblenden();
-  if(location.hash&&!/^#(kommende|rueckblick|archiv|termin-.*)$/.test(location.hash)){var z=d.getElementById(location.hash.slice(1));if(z)setTimeout(function(){z.scrollIntoView()},30)}
+  buendigSpaeter();
+  if(location.hash&&!/^#(kommende|rueckblick|archiv|satzung|termin-.*)$/.test(location.hash)){var z=d.getElementById(location.hash.slice(1));if(z)setTimeout(function(){z.scrollIntoView()},30)}
  }catch(e){
   if(window.console)console.warn('VLJ-Gestaltung nicht angewandt:',e);
   if(app)app.remove();root.classList.remove('vlj-ui','vlj-fertig');

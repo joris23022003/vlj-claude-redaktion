@@ -141,6 +141,48 @@ foreach ( array( 'style_loader_src', 'script_loader_src' ) as $vljcr_filter ) {
 	);
 }
 
+/* ---------- Website-Symbol (Favicon, Google, Startbildschirm) ---------- */
+
+// Eigenes Symbol: weißes VLJ-Zeichen auf Logo-Blau, randlos gefüllt; bleibt auch im Kreisausschnitt von Google vollständig.
+function vljcr_icon_url( $groesse ) {
+	$verfuegbar = array( 32, 48, 96, 144, 180, 192, 270, 512 );
+	$wahl       = 512;
+	foreach ( $verfuegbar as $g ) {
+		if ( $g >= (int) $groesse ) {
+			$wahl = $g;
+			break;
+		}
+	}
+	return plugin_dir_url( __FILE__ ) . 'assets/icon/vlj-icon-' . $wahl . '.png?v=' . rawurlencode( VLJCR_VERSION );
+}
+add_filter(
+	'get_site_icon_url',
+	function ( $url, $size ) {
+		return vljcr_design_aktiv() ? vljcr_icon_url( $size ) : $url;
+	},
+	20,
+	2
+);
+add_filter(
+	'site_icon_meta_tags',
+	function ( $tags ) {
+		if ( ! vljcr_design_aktiv() ) {
+			return $tags;
+		}
+		$d = plugin_dir_url( __FILE__ ) . 'assets/icon/';
+		$v = '?v=' . rawurlencode( VLJCR_VERSION );
+		return array(
+			'<link rel="icon" href="' . esc_url( $d . 'favicon.ico' . $v ) . '" sizes="48x48" />',
+			'<link rel="icon" href="' . esc_url( $d . 'vlj-icon.svg' . $v ) . '" type="image/svg+xml" />',
+			'<link rel="icon" href="' . esc_url( vljcr_icon_url( 192 ) ) . '" sizes="192x192" type="image/png" />',
+			'<link rel="apple-touch-icon" href="' . esc_url( vljcr_icon_url( 180 ) ) . '" />',
+			'<meta name="msapplication-TileImage" content="' . esc_url( vljcr_icon_url( 270 ) ) . '" />',
+			'<meta name="theme-color" content="#014e84" />',
+		);
+	},
+	20
+);
+
 /* ---------- Nachbearbeitung der fertigen Seite ---------- */
 
 add_action(
@@ -205,6 +247,12 @@ function vljcr_design_puffer( $html ) {
 				$src     = wp_get_attachment_image_src( $id, $groesse );
 				if ( ! $src || empty( $src[0] ) ) {
 					return $m[0];
+				}
+				if ( isset( $spalten[ $m[2] ] ) ) {
+					$gross = wp_get_attachment_image_src( $id, '2048x2048' );
+					if ( $gross && ! empty( $gross[0] ) ) {
+						$GLOBALS['vljcr_gross'][ $src[0] ] = $gross[0];
+					}
 				}
 				return $m[1] . 'url(' . $m[3] . $src[0] . $m[3] . ')';
 			},
@@ -338,6 +386,10 @@ function vljcr_design_puffer( $html ) {
 			$html,
 			1
 		);
+		// Große Fassungen der Porträts für die Profilansicht.
+		if ( ! empty( $GLOBALS['vljcr_gross'] ) ) {
+			$html = preg_replace( '~</body>~i', '<script>window.VLJ_GROSS=' . wp_json_encode( $GLOBALS['vljcr_gross'], JSON_UNESCAPED_SLASHES ) . ';</script></body>', $html, 1 );
+		}
 	} catch ( \Throwable $e ) {
 		return $html;
 	}

@@ -46,7 +46,7 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 }
 
 /* Kleine Elemente */
-.v-strich{display:inline-block;flex:none;width:30px;height:4px;background:var(--v-gelb);transform:skewX(-35deg);margin-right:14px}
+.v-strich{display:inline-block;flex:none;width:30px;height:4px;background:var(--v-gelb);clip-path:polygon(2.8px 0,100% 0,calc(100% - 2.8px) 100%,0 100%);margin-right:14px}
 .v-marke{display:flex;align-items:center;font-size:12.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--v-tief);line-height:1.4;margin-bottom:16px}
 .v-marke.v-hell{color:#fff}
 .v-h2{font-size:42px;letter-spacing:-.02em}
@@ -149,7 +149,7 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 .v-saetze{display:grid;grid-template-columns:1fr 1fr;column-gap:80px}
 .v-satz{display:grid;grid-template-columns:64px 1fr;border-top:1px solid var(--v-linie);padding:38px 0 44px}
 .v-nr{font-size:15px;font-weight:700;color:var(--v-tief);letter-spacing:.08em;line-height:26px;position:relative}
-.v-nr::after{content:"";position:absolute;left:1px;top:38px;width:22px;height:3px;background:var(--v-gelb);transform:skewX(-35deg)}
+.v-nr::after{content:"";position:absolute;left:0;top:38px;width:22px;height:3px;background:var(--v-gelb);clip-path:polygon(2.1px 0,100% 0,calc(100% - 2.1px) 100%,0 100%)}
 .v-satz .v-h3{font-size:24px;line-height:26px;margin-bottom:14px}
 .v-satz p{font-size:16.5px;color:#46545d}
 .v-mehr-knopf{margin-top:40px!important}
@@ -214,7 +214,7 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 .v-person:hover .v-foto img{transform:translateX(var(--fx,0)) scale(calc(var(--fs,1) * 1.045))}
 .v-person:hover .v-film{opacity:.42}
 .v-rolle{display:flex;align-items:center;margin-top:22px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--v-tief);line-height:1.35}
-.v-rolle .v-strich{width:22px;height:3px;margin-right:10px}
+.v-rolle .v-strich{width:22px;height:3px;margin-right:10px;clip-path:polygon(2.1px 0,100% 0,calc(100% - 2.1px) 100%,0 100%)}
 .v-name{font-size:21px!important;line-height:1.25!important;margin-top:10px!important;transition:color .2s}
 .v-beruf{font-size:15px;color:var(--v-grau);line-height:1.5;margin-top:6px!important}
 .v-mehr{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-size:14.5px;font-weight:500;color:var(--v-magenta);align-self:start}
@@ -227,7 +227,7 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 .v-profil.v-auf{opacity:1}
 .v-profil-karte{position:absolute;top:50%;left:50%;width:min(1060px,calc(100vw - 64px));max-height:calc(100vh - 64px);background:#fff;display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);box-shadow:0 40px 90px rgba(7,36,61,.35);transform:translate(-50%,-47%);transition:transform .35s var(--v-ease);overflow:hidden}
 .v-profil.v-auf .v-profil-karte{transform:translate(-50%,-50%)}
-.v-profil-bild{position:relative;overflow:hidden;background:linear-gradient(160deg,#1f6aa6,#0a3558);aspect-ratio:4/5;align-self:stretch;min-height:100%;clip-path:polygon(0 0,100% 0,88% 100%,0 100%)}
+.v-profil-bild{position:relative;overflow:hidden;background:linear-gradient(160deg,#1f6aa6,#0a3558);min-height:525px;align-self:stretch;clip-path:polygon(0 0,100% 0,88% 100%,0 100%)}
 .v-profil-bild img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:grayscale(1) contrast(1.05) brightness(1.06);transform:translateX(var(--fx,0)) scale(var(--fs,1));transform-origin:50% 30%}
 .v-profil-bild .v-mono{font-size:96px}
 .v-profil-text{padding:64px 60px 40px 34px;overflow:auto;display:flex;flex-direction:column;max-height:calc(100vh - 64px)}
@@ -363,7 +363,7 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
  .v-eintrag-datum b{font-size:44px}
  .v-profil-karte{top:0;left:0;right:0;bottom:0;width:100%;max-height:none;transform:translateY(24px);grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow:auto}
  .v-profil.v-auf .v-profil-karte{transform:none}
- .v-profil-bild{aspect-ratio:auto;height:min(56vh,520px);min-height:300px;clip-path:polygon(0 0,100% 0,100% 88%,0 100%)}
+ .v-profil-bild{height:min(56vh,520px);min-height:300px;clip-path:polygon(0 0,100% 0,100% 88%,0 100%)}
  .v-profil-text{padding:30px 40px 34px;overflow:visible;max-height:none}
  .v-toc ol{columns:1}
  .v-personen{grid-template-columns:repeat(2,minmax(0,1fr));gap:48px 24px}
@@ -483,3 +483,20 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 .v-beitritt p:not(.v-klein){color:#d7e5f1!important}
 .v-recht-text .erecht24-legal-texts p,.v-recht-text .erecht24-legal-texts li{font-size:17px!important}
 @media (max-width:760px){.v-haupt p:not(.v-unter):not(.v-klein):not(.v-toc-titel),.v-haupt li,.v-profil-bio p{font-size:16px}.v-recht-text .erecht24-legal-texts p,.v-recht-text .erecht24-legal-texts li{font-size:16px!important}}
+
+/* Mitglied werden: Reiter Mitgliedschaft / Satzung */
+.v-sek.v-mitglied-reiter{padding:64px 0 0}
+.v-mitglied-reiter + .v-sek{padding-top:48px!important}
+.v-mitglied-reiter + .v-sek + .v-sek{padding-top:48px!important}
+.v-sek[hidden]{display:none!important}
+.v-satzung-hinweis{margin-top:10px!important}
+.v-beitritt .v-satzung-hinweis .v-link-knopf{color:#fff!important;font-size:14.5px}
+@media (max-width:760px){.v-sek.v-mitglied-reiter{padding-top:40px}.v-mitglied-reiter + .v-sek,.v-mitglied-reiter + .v-sek + .v-sek{padding-top:32px!important}}
+
+/* Optische Bündigkeit der Datumsblöcke */
+.v-datum-gross b,.v-eintrag-datum b{text-box:trim-both cap alphabetic}
+.v-datum-gross span,.v-eintrag-datum span{text-box:trim-both cap alphabetic;margin-top:16px}
+.v-datum-gross{padding-left:22px;padding-top:0;padding-bottom:0}
+.v-marke span,.v-rolle span{text-box:trim-both cap alphabetic}
+.v-nr{text-box:trim-both cap alphabetic;line-height:1}
+@media (max-width:760px){.v-eintrag-datum span{margin-top:0}}
