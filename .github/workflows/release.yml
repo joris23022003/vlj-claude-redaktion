@@ -1,0 +1,33 @@
+name: Release
+# Bei jedem Tag vX.Y.Z: Version prüfen, Zip bauen, Release mit Zip und Prüfsumme anlegen.
+# Die WordPress-Seite (Plugin VLJ Claude Redaktion) findet das Release und aktualisiert sich selbst.
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version prüfen
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          KOPF=$(grep -m1 -oP '^\s*\*\s*Version:\s*\K[0-9.]+' vlj-claude-redaktion/vlj-claude-redaktion.php)
+          KONST=$(grep -m1 -oP "define\( 'VLJCR_VERSION', '\K[0-9.]+" vlj-claude-redaktion/vlj-claude-redaktion.php)
+          echo "Tag $TAG, Kopf $KOPF, Konstante $KONST"
+          test "$TAG" = "$KOPF" && test "$TAG" = "$KONST"
+          php -l vlj-claude-redaktion/vlj-claude-redaktion.php
+      - name: Zip bauen
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          zip -qr "vlj-claude-redaktion-$V.zip" vlj-claude-redaktion
+          echo "SHA=$(sha256sum vlj-claude-redaktion-$V.zip | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "ZIP=vlj-claude-redaktion-$V.zip" >> "$GITHUB_ENV"
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf 'Version %s\n\nsha256: %s\n' "${GITHUB_REF_NAME#v}" "$SHA" > notes.md
+          gh release create "$GITHUB_REF_NAME" "$ZIP" --title "$GITHUB_REF_NAME" --notes-file notes.md
