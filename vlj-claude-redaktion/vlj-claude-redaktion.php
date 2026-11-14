@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VLJ Claude Redaktion
  * Description:       Konnektor für Claude: Claude kann die Website lesen, Entwürfe anlegen, Seiten, Beiträge, Bilder und Menüs ändern. Zugang nur nach Anmeldung mit einem freigeschalteten Microsoft-Konto (Standard: stietenroth@julis-niedersachsen.de). Vor jeder Änderung wird der alte Stand gesichert; alles wird protokolliert.
- * Version:           1.3.0
+ * Version:           1.4.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Joris Stietenroth
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VLJCR_VERSION', '1.3.0' );
+define( 'VLJCR_VERSION', '1.4.0' );
 define( 'VLJCR_NS', 'vlj-claude/v1' );
 define( 'VLJCR_MAX_SICHERUNGEN', 20 );
 define( 'VLJCR_MAX_PROTOKOLL', 300 );
@@ -1152,6 +1152,56 @@ function vljcr_werkzeuge( $zugang ) {
 	);
 
 	$schreiben[] = array(
+		'name'        => 'baukasten_lesen',
+		'description' => 'Liest die Baukasten-Daten (Brizy) einer Seite strukturiert. Ohne feld: Übersicht der Felder. feld = Metaschlüssel ("brizy" mit /brizy-post/editor_data = Elementbaum, "brizy-compiled-sections" = fertiges HTML/CSS) oder post_content. pfad = JSON-Pointer (z. B. /brizy-post/editor_data/items/1/value/items); verpackte Texte (base64, JSON) werden automatisch ausgepackt. suche = Text, liefert alle Pfade mit Ausschnitt. tiefe = Baum ab dieser Ebene nur zusammengefasst. ab/max_zeichen zum Blättern.',
+		'inputSchema' => vljcr_schema(
+			array(
+				'id'          => $id,
+				'feld'        => array( 'type' => 'string' ),
+				'pfad'        => array( 'type' => 'string' ),
+				'suche'       => array( 'type' => 'string' ),
+				'tiefe'       => array( 'type' => 'integer' ),
+				'ab'          => array( 'type' => 'integer' ),
+				'max_zeichen' => array( 'type' => 'integer' ),
+			),
+			array( 'id' )
+		),
+		'annotations' => array( 'readOnlyHint' => true ),
+	);
+	$schreiben[] = array(
+		'name'        => 'baukasten_aendern',
+		'description' => 'Ändert die Baukasten-Daten (Brizy) einer Seite in mehreren Schritten auf einmal, z. B. um ein vorhandenes Element (Karte, Spalte, Bildreihe, Galerie) im gleichen Design zu kopieren und danach Texte und Bilder anzupassen – im Elementbaum (feld "brizy", /brizy-post/editor_data/…) UND im fertigen HTML/CSS ("brizy-compiled-sections") sowie in post_content. aenderungen = Liste von Schritten {feld, aktion, pfad, …}: setzen (wert oder wert_json), einfuegen (pfad = Liste, wert/wert_json, position), kopieren (von = Pfad des Vorbilds, pfad = Ziel-Liste, position; neue Element-IDs automatisch), entfernen, text_ersetzen (pfad = Text, suchen, ersetzen, alle). Schritte laufen nacheinander; scheitert einer, wird nichts gespeichert. probelauf = true prüft nur. Vorher Sicherung (zuruecksetzen stellt alles wieder her). Nur nach Freigabe.',
+		'inputSchema' => vljcr_schema(
+			array(
+				'id'          => $id,
+				'aenderungen' => array(
+					'type'  => 'array',
+					'items' => array(
+						'type'       => 'object',
+						'properties' => array(
+							'feld'      => array( 'type' => 'string' ),
+							'aktion'    => array( 'type' => 'string', 'enum' => array( 'setzen', 'einfuegen', 'kopieren', 'entfernen', 'text_ersetzen' ) ),
+							'pfad'      => array( 'type' => 'string' ),
+							'von'       => array( 'type' => 'string' ),
+							'position'  => array( 'type' => 'integer' ),
+							'wert'      => new stdClass(),
+							'wert_json' => array( 'type' => 'string' ),
+							'neue_ids'  => array( 'type' => 'boolean' ),
+							'suchen'    => array( 'type' => 'string' ),
+							'ersetzen'  => array( 'type' => 'string' ),
+							'alle'      => array( 'type' => 'boolean' ),
+						),
+						'required'   => array( 'feld', 'aktion' ),
+					),
+				),
+				'probelauf'   => array( 'type' => 'boolean' ),
+				'freigabe'    => $freigabe,
+			),
+			array( 'id', 'aenderungen', 'freigabe' )
+		),
+		'annotations' => array( 'destructiveHint' => true ),
+	);
+	$schreiben[] = array(
 		'name'        => 'optionen_suchen',
 		'description' => 'Sucht Einstellungen (wp_options) für Rechtstexte und Plugin-Inhalte: begriff im Namen und/oder text im Wert (z. B. ein Name aus dem Impressum). Liefert nur Namen, Größe und ob der Konnektor den Wert lesen/ändern darf (nur Rechtstext-Optionen wie eRecht24, nie Schlüssel, Token oder Passwörter).',
 		'inputSchema' => vljcr_schema( array( 'begriff' => array( 'type' => 'string' ), 'text' => array( 'type' => 'string' ) ) ),
@@ -1232,7 +1282,7 @@ function vljcr_werkzeug_aufrufen( array $params, $zugang ) {
 		return vljcr_text_ergebnis( 'Der ausführende Benutzer darf keine Seiten bearbeiten. Bitte in den Einstellungen einen Redakteur oder Administrator wählen.', true );
 	}
 
-	$schreibend = ! in_array( $name, array( 'website_info', 'inhalte_liste', 'inhalt_lesen', 'menues_lesen', 'medien_liste', 'protokoll_lesen', 'optionen_suchen', 'option_lesen' ), true );
+	$schreibend = ! in_array( $name, array( 'website_info', 'inhalte_liste', 'inhalt_lesen', 'menues_lesen', 'medien_liste', 'protokoll_lesen', 'optionen_suchen', 'option_lesen', 'baukasten_lesen' ), true );
 	if ( $schreibend && 'entwurf_anlegen' !== $name ) {
 		$fg = isset( $args['freigabe'] ) ? trim( (string) $args['freigabe'] ) : '';
 		if ( '' === $fg ) {
@@ -1598,7 +1648,7 @@ function vljcr_baukasten_uebersicht( $post_id ) {
 	foreach ( $meta as $k => $v ) {
 		$sammeln( $v, $k, 0 );
 	}
-	return array( 'art' => 'Brizy', 'hinweis' => 'Texte mit text_ersetzen (zuerst probelauf) ändern; neue Abschnitte im Brizy-Editor anlegen.', 'felder' => $felder );
+	return array( 'art' => 'Brizy', 'hinweis' => 'Texte mit text_ersetzen (zuerst probelauf) ändern; Struktur (Elemente kopieren, Bilder, neue Karten/Bildreihen) mit baukasten_lesen und baukasten_aendern.', 'felder' => $felder );
 }
 
 /** Metafelder eines Baukastens (derzeit Brizy), Werte unserialisiert. */
@@ -1737,6 +1787,417 @@ function vljcr_w_text_ersetzen( $args ) {
 	$bericht['sicherung'] = $key;
 	$bericht['inhalt']    = vljcr_kurz( $n );
 	return $bericht;
+}
+
+/* --- Baukasten-Daten strukturiert lesen und ändern (ab 1.4.0) ---
+ * Brizy speichert die Seite zweimal: als Editor-Daten (Elementbaum, JSON, meist base64-verpackt in
+ * Meta "brizy" > brizy-post > editor_data) und als fertiges HTML/CSS (Meta "brizy-compiled-sections").
+ * Neue Elemente (z. B. eine weitere Karte oder Bildreihe) entstehen, indem ein vorhandenes Element im
+ * gleichen Design kopiert und dann Texte/Bilder angepasst werden – in beiden Fassungen.
+ * Pfade sind JSON-Pointer ("/brizy-post/editor_data/items/1"); verpackte Texte (base64, JSON) werden
+ * beim Durchlaufen automatisch ausgepackt und beim Speichern wieder gleich verpackt.
+ */
+
+function vljcr_bk_json_flags( $s ) {
+	$f = 0;
+	if ( false === strpos( $s, '\\/' ) ) {
+		$f |= JSON_UNESCAPED_SLASHES;
+	}
+	if ( ! preg_match( '/\\\\u[0-9a-fA-F]{4}/', $s ) ) {
+		$f |= JSON_UNESCAPED_UNICODE;
+	}
+	return $f;
+}
+
+/** Packt base64-/JSON-Schichten eines Textes aus. $schichten erhält die Reihenfolge zum Wiederverpacken. */
+function vljcr_bk_auspacken( $wert, &$schichten ) {
+	$schichten = array();
+	for ( $i = 0; $i < 4 && is_string( $wert ); $i++ ) {
+		$anfang = ltrim( substr( $wert, 0, 20 ) );
+		if ( '' !== $anfang && ( '{' === $anfang[0] || '[' === $anfang[0] ) ) {
+			$d = json_decode( $wert );
+			if ( is_array( $d ) || is_object( $d ) ) {
+				$schichten[] = array( 'json', vljcr_bk_json_flags( $wert ) );
+				$wert        = $d;
+				continue;
+			}
+		}
+		if ( strlen( $wert ) >= 40 && preg_match( '/^[A-Za-z0-9+\/]+={0,2}$/', $wert ) ) {
+			$b = base64_decode( $wert, true );
+			if ( false !== $b && mb_check_encoding( $b, 'UTF-8' ) && false !== strpbrk( $b, '<{[' ) ) {
+				$schichten[] = array( 'base64', 0 );
+				$wert        = $b;
+				continue;
+			}
+		}
+		break;
+	}
+	return $wert;
+}
+
+function vljcr_bk_einpacken( $wert, array $schichten ) {
+	for ( $i = count( $schichten ) - 1; $i >= 0; $i-- ) {
+		if ( 'json' === $schichten[ $i ][0] ) {
+			$n = json_encode( $wert, $schichten[ $i ][1] );
+			if ( false === $n ) {
+				throw new VLJCR_Fehler( 'JSON ließ sich nicht wieder speichern (' . json_last_error_msg() . '); nichts geändert.' );
+			}
+			$wert = $n;
+		} else {
+			$wert = base64_encode( $wert );
+		}
+	}
+	return $wert;
+}
+
+function vljcr_bk_pfad( $pfad ) {
+	$pfad = trim( (string) $pfad );
+	if ( '' === $pfad || '/' === $pfad ) {
+		return array();
+	}
+	$teile = explode( '/', ltrim( $pfad, '/' ) );
+	return array_map(
+		function ( $t ) {
+			return str_replace( array( '~1', '~0' ), array( '/', '~' ), $t );
+		},
+		$teile
+	);
+}
+
+/** Läuft den Pfad entlang (packt Texte unterwegs aus und wieder ein) und ruft am Ziel $fn( &$knoten ) auf. */
+function vljcr_bk_mit( &$knoten, array $segs, $fn, $pfad = '' ) {
+	if ( ! $segs ) {
+		$fn( $knoten );
+		return;
+	}
+	if ( is_string( $knoten ) ) {
+		$sch = array();
+		$d   = vljcr_bk_auspacken( $knoten, $sch );
+		if ( ! $sch ) {
+			throw new VLJCR_Fehler( 'Pfad ' . ( '' === $pfad ? '/' : $pfad ) . ' ist ein einfacher Text; dahinter geht es nicht weiter.' );
+		}
+		vljcr_bk_mit( $d, $segs, $fn, $pfad );
+		$knoten = vljcr_bk_einpacken( $d, $sch );
+		return;
+	}
+	$k = array_shift( $segs );
+	if ( is_array( $knoten ) ) {
+		if ( ! array_key_exists( $k, $knoten ) ) {
+			throw new VLJCR_Fehler( 'Pfad ' . $pfad . '/' . $k . ' gibt es nicht (vorhanden: ' . implode( ', ', array_slice( array_map( 'strval', array_keys( $knoten ) ), 0, 40 ) ) . ').' );
+		}
+		vljcr_bk_mit( $knoten[ $k ], $segs, $fn, $pfad . '/' . $k );
+	} elseif ( is_object( $knoten ) ) {
+		if ( ! property_exists( $knoten, $k ) ) {
+			throw new VLJCR_Fehler( 'Pfad ' . $pfad . '/' . $k . ' gibt es nicht (vorhanden: ' . implode( ', ', array_slice( array_keys( get_object_vars( $knoten ) ), 0, 40 ) ) . ').' );
+		}
+		vljcr_bk_mit( $knoten->$k, $segs, $fn, $pfad . '/' . $k );
+	} else {
+		throw new VLJCR_Fehler( 'Pfad ' . $pfad . ' ist ein einzelner Wert; dahinter geht es nicht weiter.' );
+	}
+}
+
+/** Liefert den (ausgepackten) Wert an einem Pfad, ohne etwas zu ändern. */
+function vljcr_bk_holen( $wurzel, array $segs ) {
+	$erg = null;
+	vljcr_bk_mit(
+		$wurzel,
+		$segs,
+		function ( &$k ) use ( &$erg ) {
+			$erg = $k;
+		}
+	);
+	if ( is_string( $erg ) ) {
+		$sch = array();
+		$erg = vljcr_bk_auspacken( $erg, $sch );
+	}
+	return $erg;
+}
+
+/** Sucht Text in allen Blättern (auch in verpackten Texten) und liefert Pfade mit Ausschnitt. */
+function vljcr_bk_suchen( $wert, $text, $pfad, array &$treffer, $tiefe = 0 ) {
+	if ( count( $treffer ) >= 60 ) {
+		return;
+	}
+	if ( is_array( $wert ) || is_object( $wert ) ) {
+		foreach ( $wert as $k => $v ) {
+			vljcr_bk_suchen( $v, $text, $pfad . '/' . str_replace( array( '~', '/' ), array( '~0', '~1' ), (string) $k ), $treffer, $tiefe );
+		}
+		return;
+	}
+	if ( ! is_string( $wert ) ) {
+		return;
+	}
+	if ( $tiefe < 6 ) {
+		$sch = array();
+		$d   = vljcr_bk_auspacken( $wert, $sch );
+		if ( $sch ) {
+			vljcr_bk_suchen( $d, $text, $pfad, $treffer, $tiefe + 1 );
+			return;
+		}
+	}
+	$pos = mb_stripos( $wert, $text );
+	if ( false === $pos ) {
+		return;
+	}
+	$treffer[] = array(
+		'pfad'        => '' === $pfad ? '/' : $pfad,
+		'anzahl'      => substr_count( mb_strtolower( $wert ), mb_strtolower( $text ) ),
+		'laenge'      => mb_strlen( $wert ),
+		'position'    => $pos,
+		'ausschnitt'  => mb_substr( $wert, max( 0, $pos - 150 ), mb_strlen( $text ) + 300 ),
+	);
+}
+
+/** Kürzt einen Baum für die Anzeige: unterhalb von $tiefe nur noch Typ, ID und Größe. */
+function vljcr_bk_kuerzen( $wert, $tiefe ) {
+	if ( is_string( $wert ) ) {
+		return mb_strlen( $wert ) > 400 ? mb_substr( $wert, 0, 400 ) . ' …[' . mb_strlen( $wert ) . ' Zeichen]' : $wert;
+	}
+	if ( ! is_array( $wert ) && ! is_object( $wert ) ) {
+		return $wert;
+	}
+	$istobj = is_object( $wert );
+	$feld   = $istobj ? get_object_vars( $wert ) : $wert;
+	if ( $tiefe <= 0 ) {
+		$info = ( $istobj ? 'Objekt' : 'Liste' ) . ' mit ' . count( $feld ) . ' Einträgen';
+		if ( $istobj && isset( $feld['type'] ) && is_string( $feld['type'] ) ) {
+			$info = $feld['type'] . ( isset( $feld['value']->_id ) ? ' #' . $feld['value']->_id : '' );
+		}
+		return '…' . $info;
+	}
+	$out = array();
+	foreach ( $feld as $k => $v ) {
+		$out[ $k ] = vljcr_bk_kuerzen( $v, $tiefe - 1 );
+	}
+	return $istobj ? (object) $out : $out;
+}
+
+function vljcr_bk_neue_ids( &$wert ) {
+	if ( is_object( $wert ) ) {
+		foreach ( get_object_vars( $wert ) as $k => $v ) {
+			if ( '_id' === $k && is_string( $v ) ) {
+				$wert->_id = strtolower( wp_generate_password( 12, false, false ) );
+				$wert->_id = preg_replace( '/[^a-z]/', 'x', $wert->_id );
+			} else {
+				vljcr_bk_neue_ids( $wert->$k );
+			}
+		}
+	} elseif ( is_array( $wert ) ) {
+		foreach ( $wert as &$v ) {
+			vljcr_bk_neue_ids( $v );
+		}
+		unset( $v );
+	}
+}
+
+function vljcr_bk_felder_pruefen( $post_id, $feld ) {
+	$feld = (string) $feld;
+	if ( 'post_content' === $feld ) {
+		return $feld;
+	}
+	if ( ! preg_match( '/brizy/i', $feld ) || 0 === strpos( $feld, '_vljcr_' ) || ! metadata_exists( 'post', $post_id, $feld ) ) {
+		$alle = array_keys( vljcr_baukasten_meta( $post_id ) );
+		throw new VLJCR_Fehler( 'Feld ' . $feld . ' gibt es nicht. Möglich: post_content, ' . implode( ', ', $alle ) . '.' );
+	}
+	return $feld;
+}
+
+function vljcr_w_baukasten_lesen( $args ) {
+	$p = vljcr_post_holen( $args['id'] );
+	if ( empty( $args['feld'] ) ) {
+		return array(
+			'felder'  => vljcr_baukasten_uebersicht( $p->ID ),
+			'hinweis' => 'feld angeben (Metaschlüssel, z. B. "brizy" oder "brizy-compiled-sections"), dazu pfad (JSON-Pointer, z. B. /brizy-post/editor_data/items) oder suche.',
+		);
+	}
+	$feld  = vljcr_bk_felder_pruefen( $p->ID, $args['feld'] );
+	$wurzel = 'post_content' === $feld ? (string) $p->post_content : get_post_meta( $p->ID, $feld, true );
+	$segs  = vljcr_bk_pfad( isset( $args['pfad'] ) ? $args['pfad'] : '' );
+
+	if ( isset( $args['suche'] ) && '' !== (string) $args['suche'] ) {
+		$basis   = vljcr_bk_holen( $wurzel, $segs );
+		$treffer = array();
+		$praefix = $segs ? '/' . implode( '/', array_map( function ( $s ) { return str_replace( array( '~', '/' ), array( '~0', '~1' ), $s ); }, $segs ) ) : '';
+		vljcr_bk_suchen( $basis, (string) $args['suche'], $praefix, $treffer );
+		return array( 'feld' => $feld, 'suche' => (string) $args['suche'], 'treffer' => $treffer, 'begrenzt' => count( $treffer ) >= 60 );
+	}
+
+	$wert = vljcr_bk_holen( $wurzel, $segs );
+	$art  = is_object( $wert ) ? 'Objekt' : ( is_array( $wert ) ? 'Liste' : gettype( $wert ) );
+	if ( isset( $args['tiefe'] ) && ( is_array( $wert ) || is_object( $wert ) ) ) {
+		$wert = vljcr_bk_kuerzen( $wert, max( 0, (int) $args['tiefe'] ) );
+	}
+	$text = is_string( $wert ) ? $wert : wp_json_encode( $wert, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
+	$max  = isset( $args['max_zeichen'] ) ? max( 500, (int) $args['max_zeichen'] ) : 30000;
+	$ab   = isset( $args['ab'] ) ? max( 0, (int) $args['ab'] ) : 0;
+	return array(
+		'feld'         => $feld,
+		'pfad'         => isset( $args['pfad'] ) ? (string) $args['pfad'] : '/',
+		'art'          => $art,
+		'laenge'       => mb_strlen( $text ),
+		'ab'           => $ab,
+		'wert'         => mb_substr( $text, $ab, $max ),
+		'vollstaendig' => ( $ab + $max ) >= mb_strlen( $text ),
+	);
+}
+
+function vljcr_bk_eingabewert( array $a ) {
+	if ( isset( $a['wert_json'] ) && is_string( $a['wert_json'] ) && '' !== $a['wert_json'] ) {
+		$d = json_decode( $a['wert_json'] );
+		if ( null === $d && 'null' !== trim( $a['wert_json'] ) ) {
+			throw new VLJCR_Fehler( 'wert_json ist kein gültiges JSON (' . json_last_error_msg() . ').' );
+		}
+		return $d;
+	}
+	if ( ! array_key_exists( 'wert', $a ) ) {
+		throw new VLJCR_Fehler( 'wert oder wert_json fehlt.' );
+	}
+	$w = $a['wert'];
+	return ( is_array( $w ) ) ? json_decode( wp_json_encode( $w ) ) : $w;
+}
+
+function vljcr_w_baukasten_aendern( $args ) {
+	$p    = vljcr_post_holen( $args['id'], false );
+	$ops  = isset( $args['aenderungen'] ) && is_array( $args['aenderungen'] ) ? array_values( $args['aenderungen'] ) : array();
+	$probe = ! empty( $args['probelauf'] );
+	if ( ! $ops ) {
+		throw new VLJCR_Fehler( 'aenderungen fehlt (Liste von Schritten).' );
+	}
+	$werte   = array();
+	$bericht = array();
+	foreach ( $ops as $i => $a ) {
+		$a      = (array) $a;
+		$nr     = 'Schritt ' . ( $i + 1 );
+		$feld   = vljcr_bk_felder_pruefen( $p->ID, isset( $a['feld'] ) ? $a['feld'] : '' );
+		$aktion = isset( $a['aktion'] ) ? (string) $a['aktion'] : '';
+		if ( ! array_key_exists( $feld, $werte ) ) {
+			$werte[ $feld ] = 'post_content' === $feld ? (string) $p->post_content : get_post_meta( $p->ID, $feld, true );
+		}
+		$segs = vljcr_bk_pfad( isset( $a['pfad'] ) ? $a['pfad'] : '' );
+		try {
+			switch ( $aktion ) {
+				case 'setzen':
+					if ( ! $segs ) {
+						throw new VLJCR_Fehler( 'setzen braucht einen pfad (nicht die Wurzel).' );
+					}
+					$neu = vljcr_bk_eingabewert( $a );
+					vljcr_bk_mit( $werte[ $feld ], $segs, function ( &$k ) use ( $neu ) { $k = $neu; } );
+					$bericht[] = $nr . ': ' . $feld . ' ' . $a['pfad'] . ' gesetzt.';
+					break;
+				case 'einfuegen':
+				case 'kopieren':
+					if ( 'kopieren' === $aktion ) {
+						if ( empty( $a['von'] ) ) {
+							throw new VLJCR_Fehler( 'kopieren braucht von (Pfad des Vorbilds im selben Feld).' );
+						}
+						$neu = vljcr_bk_holen( $werte[ $feld ], vljcr_bk_pfad( $a['von'] ) );
+						$neu = json_decode( wp_json_encode( $neu ) );
+					} else {
+						$neu = vljcr_bk_eingabewert( $a );
+					}
+					if ( ! isset( $a['neue_ids'] ) || $a['neue_ids'] ) {
+						vljcr_bk_neue_ids( $neu );
+					}
+					$pos = isset( $a['position'] ) ? (int) $a['position'] : null;
+					vljcr_bk_mit(
+						$werte[ $feld ],
+						$segs,
+						function ( &$k ) use ( $neu, $pos ) {
+							if ( ! is_array( $k ) ) {
+								throw new VLJCR_Fehler( 'Ziel ist keine Liste; einfügen geht nur in Listen.' );
+							}
+							$k = array_values( $k );
+							$p = null === $pos ? count( $k ) : max( 0, min( count( $k ), $pos ) );
+							array_splice( $k, $p, 0, array( $neu ) );
+						}
+					);
+					$bericht[] = $nr . ': ' . ( 'kopieren' === $aktion ? 'Kopie von ' . $a['von'] : 'Wert' ) . ' in ' . $feld . ' ' . ( isset( $a['pfad'] ) ? $a['pfad'] : '/' ) . ' an Position ' . ( null === $pos ? 'Ende' : $pos ) . ' eingefügt.';
+					break;
+				case 'entfernen':
+					if ( ! $segs ) {
+						throw new VLJCR_Fehler( 'entfernen braucht einen pfad.' );
+					}
+					$letzter = array_pop( $segs );
+					vljcr_bk_mit(
+						$werte[ $feld ],
+						$segs,
+						function ( &$k ) use ( $letzter ) {
+							if ( is_array( $k ) && array_key_exists( $letzter, $k ) ) {
+								$liste = array_keys( $k ) === range( 0, count( $k ) - 1 );
+								unset( $k[ $letzter ] );
+								if ( $liste ) {
+									$k = array_values( $k );
+								}
+							} elseif ( is_object( $k ) && property_exists( $k, $letzter ) ) {
+								unset( $k->$letzter );
+							} else {
+								throw new VLJCR_Fehler( 'Zu entfernender Eintrag ' . $letzter . ' fehlt.' );
+							}
+						}
+					);
+					$bericht[] = $nr . ': ' . $feld . ' ' . $a['pfad'] . ' entfernt.';
+					break;
+				case 'text_ersetzen':
+					$suchen = isset( $a['suchen'] ) ? (string) $a['suchen'] : '';
+					if ( '' === $suchen ) {
+						throw new VLJCR_Fehler( 'text_ersetzen braucht suchen.' );
+					}
+					$ersetzen = isset( $a['ersetzen'] ) ? (string) $a['ersetzen'] : '';
+					$alle     = ! empty( $a['alle'] );
+					$anzahl   = 0;
+					vljcr_bk_mit(
+						$werte[ $feld ],
+						$segs,
+						function ( &$k ) use ( $suchen, $ersetzen, $alle, &$anzahl ) {
+							if ( ! is_string( $k ) ) {
+								$k2 = wp_json_encode( $k, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+								throw new VLJCR_Fehler( 'Ziel ist kein Text, sondern ' . ( is_object( $k ) ? 'ein Objekt' : 'eine Liste' ) . ' (' . mb_strlen( $k2 ) . ' Zeichen); pfad genauer wählen.' );
+							}
+							$sch = array();
+							$d   = vljcr_bk_auspacken( $k, $sch );
+							if ( $sch && ! is_string( $d ) ) {
+								throw new VLJCR_Fehler( 'Ziel ist verpackte Struktur; pfad bis zum Text wählen.' );
+							}
+							$anzahl = substr_count( $d, $suchen );
+							if ( 0 === $anzahl ) {
+								throw new VLJCR_Fehler( 'suchen nicht gefunden.' );
+							}
+							if ( $anzahl > 1 && ! $alle ) {
+								throw new VLJCR_Fehler( 'suchen kommt ' . $anzahl . '-mal vor; eindeutiger wählen oder alle = true.' );
+							}
+							$d = str_replace( $suchen, $ersetzen, $d );
+							$k = $sch ? vljcr_bk_einpacken( $d, $sch ) : $d;
+						}
+					);
+					$bericht[] = $nr . ': ' . $anzahl . ' Stelle(n) in ' . $feld . ' ' . ( isset( $a['pfad'] ) ? $a['pfad'] : '/' ) . ' ersetzt.';
+					break;
+				default:
+					throw new VLJCR_Fehler( 'aktion muss setzen, einfuegen, kopieren, entfernen oder text_ersetzen sein.' );
+			}
+		} catch ( VLJCR_Fehler $e ) {
+			throw new VLJCR_Fehler( $nr . ' (' . $aktion . ', ' . $feld . ( isset( $a['pfad'] ) ? ' ' . $a['pfad'] : '' ) . '): ' . $e->getMessage() . ' Nichts geändert.' );
+		}
+	}
+	if ( $probe ) {
+		return array( 'meldung' => 'Probelauf: alle ' . count( $ops ) . ' Schritte ausführbar, nichts geändert.', 'schritte' => $bericht );
+	}
+	$key   = vljcr_sicherung_anlegen( $p, 'vor baukasten_aendern' );
+	$daten = array( 'ID' => $p->ID );
+	foreach ( $werte as $feld => $wert ) {
+		if ( 'post_content' === $feld ) {
+			$daten['post_content'] = $wert;
+		} else {
+			update_post_meta( $p->ID, $feld, wp_slash( $wert ) );
+		}
+	}
+	$n = vljcr_aktualisieren( $daten );
+	vljcr_cache_leeren();
+	return array(
+		'meldung'   => count( $ops ) . ' Schritt(e) an Inhalt ' . $p->ID . ' ausgeführt (Felder: ' . implode( ', ', array_keys( $werte ) ) . ').',
+		'schritte'  => $bericht,
+		'sicherung' => $key,
+		'inhalt'    => vljcr_kurz( $n ),
+	);
 }
 
 function vljcr_w_status_setzen( $args ) {

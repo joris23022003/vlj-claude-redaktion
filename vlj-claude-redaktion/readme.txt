@@ -1,5 +1,5 @@
 === VLJ Claude Redaktion ===
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -23,7 +23,9 @@ im Release-Text "sha256: <prüfsumme>"). Automatische Aktualisierung ist nach de
 
 == Werkzeuge ==
 website_info, inhalte_liste, inhalt_lesen, menues_lesen, medien_liste, protokoll_lesen, entwurf_anlegen,
-inhalt_aendern, text_ersetzen, status_setzen, bild_hochladen, beitragsbild_setzen, zuruecksetzen, menue_aendern.
+inhalt_aendern, text_ersetzen, status_setzen, bild_hochladen, beitragsbild_setzen, zuruecksetzen, menue_aendern,
+optionen_suchen, option_lesen, option_text_ersetzen, option_zuruecksetzen, plugin_selbst_aktualisieren,
+baukasten_lesen, baukasten_aendern (ab 1.4.0: Brizy-Elemente strukturiert lesen, kopieren und ändern).
 
 == Sicherheit ==
 - Ausschalten: Häkchen "Konnektor eingeschaltet" entfernen oder "Alle Anmeldungen widerrufen".
