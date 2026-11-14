@@ -179,6 +179,7 @@ function termineLesen(doc){
   g.text=g.rest.filter(function(p){return p!==unterEl});
   g.datum=g.archiv?null:datumAus(txt(g.rt).slice(0,500));
   g.kommend=istKommend(g.datum);
+  g.id=g.datum?'termin-'+g.datum.j+'-'+zwei(g.datum.m+1)+'-'+zwei(g.datum.t):(g.archiv?'archiv-liste':'');
   g.markeText=/^Save the Date/i.test(g.unter)?'Save the Date':(g.kommend?'Termin':'Rückblick');
   g.unterOhne=g.unter.replace(/^Save the Date\s*[–-]\s*/i,'');
  });
@@ -200,7 +201,7 @@ function startseite(){
   var g=el('div','v-zwei');
   g.innerHTML='<div>'+marke('Vereinigung Liberaler Juristen')+'<h2 class="v-h2">'+esc(txt(hs))+'</h2></div>';
   var r=el('div','v-gruss-text');
-  text.forEach(function(p){var c=sauber(p);c.className='v-lead';r.appendChild(c)});
+  text.forEach(function(p){r.appendChild(sauber(p))});
   if(sig){var m=txt(sig).match(/^Ihr\s+(.+?)\s*\((.+)\)$/);var bild=cfg.bilder&&cfg.bilder.vorsitz;
    r.insertAdjacentHTML('beforeend','<div class="v-sig">'+(bild?'<img src="'+esc(bild)+'" alt="" width="64" height="64" loading="lazy">':'')+'<div><b>'+esc(m?'Ihr '+m[1]:txt(sig))+'</b>'+(m?'<span>'+esc(m[2])+'</span>':'')+'</div></div>')}
   g.appendChild(r);w.appendChild(g);
@@ -223,9 +224,9 @@ function startseite(){
   t.innerHTML=marke('Aktuelles')+(titel?'<h2 class="v-h2">'+esc(txt(titel))+'</h2>':'');
   if(unter)t.insertAdjacentHTML('beforeend','<p class="v-unter">'+esc(schriftzug(txt(unter)))+'</p>');
   text.forEach(function(p){t.appendChild(sauber(p))});
-  if(link)t.appendChild(knopf('Weitere Infos',link.href,'v-text-link',I.pfeil));
+  var infoLink=null;if(link){infoLink=knopf('Weitere Infos',link.href,'v-text-link',I.pfeil);t.appendChild(infoLink)}
   a.appendChild(bilder);a.appendChild(t);aktW.appendChild(a);
-  aktInfo={titel:titel?txt(titel):'',bilder:bilder,box:a};
+  aktInfo={titel:titel?txt(titel):'',bilder:bilder,box:a,link:infoLink};
  }
  // Grundsätze
  var paare=[];
@@ -252,11 +253,12 @@ function startseite(){
     var mitte=el('div','v-termin-text');mitte.innerHTML=marke(n.markeText==='Save the Date'?'Save the Date':'Nächster Termin')+'<h2 class="v-h3">'+esc(n.titel)+'</h2>';
     n.text.slice(0,1).forEach(function(p){mitte.appendChild(sauber(p))});
     t.appendChild(mitte);
-    var ak=el('div','v-termin-aktionen');ak.appendChild(knopf('In meinen Kalender',kalenderHref(n.datum),'',I.kal));ak.appendChild(knopf('Termine',location.origin+'/termine/','v-umriss',I.pfeil));t.appendChild(ak);
+    var ak=el('div','v-termin-aktionen');ak.appendChild(knopf('In meinen Kalender',kalenderHref(n.datum),'',I.kal));ak.appendChild(knopf('Termine',location.origin+'/termine/#'+n.id,'v-umriss',I.pfeil));t.appendChild(ak);
     terminW.appendChild(t);terminW.parentNode.hidden=false;
    }
    if(aktInfo){
     var g=gs.filter(function(x){return x.titel===aktInfo.titel})[0];
+    if(g&&g.id&&aktInfo.link)aktInfo.link.href=location.origin+'/termine/#'+g.id;
     if(g&&g.bilder.length){
      var b=g.bilder;aktInfo.bilder.innerHTML='<img class="v-akt-gross" src="'+esc(b[0].src)+'" srcset="'+esc(b[0].srcset)+'" sizes="(max-width: 900px) 100vw, 560px" alt="'+esc(b[0].alt)+'" loading="lazy">'+(b[2]?'<img class="v-akt-klein" src="'+esc(b[2].src)+'" srcset="'+esc(b[2].srcset)+'" sizes="(max-width: 900px) 45vw, 240px" alt="'+esc(b[2].alt)+'" loading="lazy">':'');
      aktInfo.bilder.hidden=false;
@@ -284,14 +286,7 @@ function ueberUns(){
  var w=sektion('v-text-seite');
  var spalte=el('div','v-lesen');
  var ps=[];inhaltsText().forEach(function(rt){absaetze(rt).forEach(function(p){if(!/^VEREINIGUNG LIBERALER/i.test(txt(p))&&p.tagName!=='H2')ps.push(p)})});
- ps.forEach(function(p,i){
-  var c=sauber(p);
-  if(i===0)c.className='v-lead';
-  var satz=null;
-  if(i===ps.length-1){var m=c.innerHTML.match(/^(.*[.!?])\s+(Eine FDP-Mitgliedschaft ist nicht notwendig\.)\s*$/);if(m){c.innerHTML=m[1];satz=m[2]}}
-  spalte.appendChild(c);
-  if(satz)spalte.appendChild(el('blockquote','v-zitat',strich()+'<p>'+esc(satz)+'</p>'));
- });
+ ps.forEach(function(p){spalte.appendChild(sauber(p))});
  w.appendChild(spalte);
 }
 
@@ -315,7 +310,7 @@ function mitglied(){
  var w=sektion('v-mitglied');
  var g=el('div','v-mitglied-raster');
  var links=el('div','v-lesen');
- intro.forEach(function(p,k){var c=sauber(p);if(k===0)c.className='v-lead';links.appendChild(c)});
+ intro.forEach(function(p){links.appendChild(sauber(p))});
  g.appendChild(links);
  var box=el('aside','v-beitritt');
  beitrag.forEach(function(p,k){var c=sauber(p);if(k===0){var h=el('h2','v-beitritt-frage',c.innerHTML);box.appendChild(h)}else box.appendChild(c)});
@@ -419,7 +414,7 @@ function profil(leute,i,hist){
  var dat=p.daten||{},vor=leute[(i-1+leute.length)%leute.length],nach=leute[(i+1)%leute.length];
  profilEl.setAttribute('aria-label',p.name);
  profilEl.innerHTML='<div class="v-profil-karte"><button type="button" class="v-profil-zu" aria-label="Schließen">'+I.zu+'</button>'+
-  '<div class="v-profil-bild">'+(p.bild?'<img src="'+esc(p.bild)+'" alt="'+esc(p.name)+'">':'<span class="v-mono">'+esc(p.name.replace(/^(Prof\.\s*)?(Dr\.\s*)?/,'').split(' ').map(function(x){return x[0]}).join('').slice(0,2))+'</span>')+'<span class="v-film"></span></div>'+
+  '<div class="v-profil-bild">'+(p.bild?'<img src="'+esc(p.bild)+'" alt="'+esc(p.name)+'"'+((dat.foto)?' style="--fx:'+esc(dat.foto.x||'0')+';--fs:'+esc(String(dat.foto.s||1))+'"':'')+'>':'<span class="v-mono">'+esc(p.name.replace(/^(Prof\.\s*)?(Dr\.\s*)?/,'').split(' ').map(function(x){return x[0]}).join('').slice(0,2))+'</span>')+'<span class="v-film"></span></div>'+
   '<div class="v-profil-text">'+marke(p.rolle)+'<h2>'+esc(p.name)+'</h2><p class="v-profil-beruf">'+esc(p.beruf)+'</p>'+
   (dat.bio?'<div class="v-profil-bio"><p>'+esc(dat.bio)+'</p></div>':'')+
   '<div class="v-knoepfe"></div>'+
@@ -484,7 +479,7 @@ function termine(){
  Object.keys(namen).forEach(function(k){if(!anz[k])return;var b=el('button','v-reiter-knopf',esc(namen[k])+(k!=='archiv'?'<span>'+anz[k]+'</span>':''));b.type='button';b.setAttribute('role','tab');b.id='reiter-'+k;b.dataset.reiter=k;b.addEventListener('click',function(){zeige(k,true)});leiste.appendChild(b)});
  w.appendChild(leiste);w.appendChild(liste);
  gs.forEach(function(g){
-  var a=el('article','v-eintrag'+(g.kommend?' v-kommend':''));a.dataset.reiter=g.reiter;g.box=a;
+  var a=el('article','v-eintrag'+(g.kommend?' v-kommend':''));a.dataset.reiter=g.reiter;g.box=a;if(g.id)a.id=g.id;
   if(g.archiv){
    a.classList.add('v-archiv');
    a.innerHTML='<div class="v-eintrag-datum"></div><div class="v-eintrag-inhalt">'+marke('Archiv')+'<h2 class="v-h3">'+esc(g.titel)+'</h2></div>';
@@ -519,7 +514,8 @@ function termine(){
   t.parentNode.insertBefore(b,t.nextSibling);
   b.addEventListener('click',function(){var auf=!t.classList.contains('v-offen');t.classList.toggle('v-offen',auf);t.style.maxHeight=(auf?t.scrollHeight+30:max)+'px';b.setAttribute('aria-expanded',auf?'true':'false');$('span',b).textContent=auf?'Weniger anzeigen':'Weiterlesen'});
  }
- var start=(location.hash||'').replace('#','');if(!anz[start])start=anz.kommende?'kommende':'rueckblick';
+ var h=(location.hash||'').replace('#',''),ziel=gs.filter(function(g){return g.id&&g.id===h})[0];
+ var start=ziel?ziel.reiter:h;if(!anz[start])start=anz.kommende?'kommende':'rueckblick';
  function zeige(k,user){
   $$('.v-reiter-knopf',leiste).forEach(function(b){var an=b.dataset.reiter===k;b.setAttribute('aria-selected',an?'true':'false');b.tabIndex=an?0:-1});
   var erst=true;gs.forEach(function(g){var an=g.reiter===k;g.box.hidden=!an;g.box.classList.toggle('v-erst',an&&erst);if(an){erst=false;einklappen(g)}});
@@ -529,6 +525,10 @@ function termine(){
  leiste.addEventListener('keydown',function(e){if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;var bs=$$('.v-reiter-knopf',leiste),i=bs.indexOf(d.activeElement);if(i<0)return;var n=bs[(i+(e.key==='ArrowRight'?1:-1)+bs.length)%bs.length];n.focus();n.click()});
  liste.setAttribute('role','tabpanel');
  zeige(start,false);
+ function hinZu(g){if(!g)return;if(g.box.hidden)zeige(g.reiter,false);var t=$('.v-eintrag-text',g.box),k=$('.v-weiterlesen',g.box);if(k&&t&&!t.classList.contains('v-offen'))k.click();
+  setTimeout(function(){var kopfH=($('.v-kopf')||{offsetHeight:0}).offsetHeight;window.scrollTo({top:g.box.getBoundingClientRect().top+window.scrollY-kopfH-16,behavior:'auto'})},60)}
+ if(ziel)hinZu(ziel);
+ window.addEventListener('hashchange',function(){var hh=location.hash.replace('#',''),z=gs.filter(function(g){return g.id===hh})[0];if(z)hinZu(z);else if(anz[hh])zeige(hh,false)});
 }
 
 /* ---------- Einblenden ---------- */
@@ -547,7 +547,7 @@ function los(){
   geruest();f();fuss();
   root.classList.add('vlj-fertig');
   einblenden();
-  if(location.hash&&!/^#(kommende|rueckblick|archiv)$/.test(location.hash)){var z=d.getElementById(location.hash.slice(1));if(z)setTimeout(function(){z.scrollIntoView()},30)}
+  if(location.hash&&!/^#(kommende|rueckblick|archiv|termin-.*)$/.test(location.hash)){var z=d.getElementById(location.hash.slice(1));if(z)setTimeout(function(){z.scrollIntoView()},30)}
  }catch(e){
   if(window.console)console.warn('VLJ-Gestaltung nicht angewandt:',e);
   if(app)app.remove();root.classList.remove('vlj-ui','vlj-fertig');

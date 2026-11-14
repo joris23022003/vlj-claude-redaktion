@@ -201,7 +201,7 @@ function vljcr_design_puffer( $html ) {
 				if ( ! $id ) {
 					return $m[0];
 				}
-				$groesse = isset( $spalten[ $m[2] ] ) ? 'large' : '1536x1536';
+				$groesse = isset( $spalten[ $m[2] ] ) ? '1536x1536' : '2048x2048';
 				$src     = wp_get_attachment_image_src( $id, $groesse );
 				if ( ! $src || empty( $src[0] ) ) {
 					return $m[0];
