@@ -432,7 +432,7 @@ function profil(leute,i,hist){
  $('.v-profil-zu',profilEl).addEventListener('click',function(){profilZu()});
  $$('.v-profil-navi a',profilEl).forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var k=a.classList.contains('v-zurueck')?(i-1+leute.length)%leute.length:(i+1)%leute.length;profil(leute,k,true)})});
  if(hist!==false&&history.replaceState)history.replaceState(null,'','#'+p.id);
- setTimeout(function(){var z=profilEl&&$('.v-profil-zu',profilEl);if(z)z.focus()},neu?60:0);
+ setTimeout(function(){var k=profilEl&&$('.v-profil-karte',profilEl);if(k){k.tabIndex=-1;k.focus({preventScroll:true})}},neu?60:0);
 }
 d.addEventListener('keydown',function(e){
  if(!profilEl)return;
@@ -456,7 +456,7 @@ function lbAuf(liste,i){
  lb.addEventListener('click',function(e){if(e.target===lb)zu()});d.addEventListener('keydown',key);
  var x0=null;lb.addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});lb.addEventListener('touchend',function(e){if(x0==null)return;var dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>45)lbZeigen(lbI+(dx<0?1:-1));x0=null});
  if(liste.length<2){$('.v-lb-vor',lb).hidden=true;$('.v-lb-zur',lb).hidden=true}
- lbZeigen(i);$('.v-lb-zu',lb).focus();
+ lbZeigen(i);lb.tabIndex=-1;lb.focus({preventScroll:true});
 }
 function groessteQuelle(b){if(!b.srcset)return b.src;var best=b.src,bw=0;b.srcset.split(',').forEach(function(s){var m=s.trim().match(/^(\S+)\s+(\d+)w$/);if(m&&+m[2]>bw&&+m[2]<=2048){bw=+m[2];best=m[1]}});return best}
 function archivZeitleiste(g){
