@@ -332,7 +332,10 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
 /* ---------- Mittlere Breiten ---------- */
 @media (max-width:1180px){
  .v-w{padding:0 40px}
- .v-personen{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .v-personen{gap:48px 24px}
+ .v-termin-leiste::after{display:none}
+ .v-termin-leiste{border-top:4px solid var(--v-gelb)}
+ .v-termin{padding-right:0}
  .v-termin{grid-template-columns:200px 1fr;padding-right:60px}
  .v-termin-aktionen{grid-column:2;flex-direction:row;min-width:0;flex-wrap:wrap}
  .v-saetze{column-gap:56px}
@@ -362,6 +365,9 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
  .v-profil-bild{height:46vh;min-height:300px;clip-path:polygon(0 0,100% 0,100% 88%,0 100%)}
  .v-profil-text{padding:30px 40px 34px;overflow:visible}
  .v-toc ol{columns:1}
+ .v-personen{grid-template-columns:repeat(2,minmax(0,1fr));gap:48px 24px}
+ .v-fuss-raster{grid-template-columns:1fr 1fr;gap:40px 32px}
+ .v-fuss-marke{grid-column:1/-1}
 }
 @media (max-width:760px){
  .v-app{font-size:16px}
