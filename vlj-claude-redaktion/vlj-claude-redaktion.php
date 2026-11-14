@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VLJ Claude Redaktion
  * Description:       Konnektor für Claude: Claude kann die Website lesen, Entwürfe anlegen, Seiten, Beiträge, Bilder und Menüs ändern. Zugang nur nach Anmeldung mit einem freigeschalteten Microsoft-Konto (Standard: stietenroth@julis-niedersachsen.de). Vor jeder Änderung wird der alte Stand gesichert; alles wird protokolliert.
- * Version:           1.4.1
+ * Version:           1.4.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Joris Stietenroth
@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VLJCR_VERSION', '1.4.1' );
+define( 'VLJCR_VERSION', '1.4.2' );
 define( 'VLJCR_NS', 'vlj-claude/v1' );
 define( 'VLJCR_MAX_SICHERUNGEN', 20 );
 define( 'VLJCR_MAX_PROTOKOLL', 300 );
@@ -1536,6 +1536,15 @@ function vljcr_w_medien_liste( $args ) {
 			'datum' => $a->post_date,
 			'alt'   => get_post_meta( $a->ID, '_wp_attachment_image_alt', true ),
 		);
+		$meta = wp_get_attachment_metadata( $a->ID );
+		$uid  = get_post_meta( $a->ID, 'brizy_attachment_uid', true );
+		if ( is_array( $meta ) && ! empty( $meta['width'] ) ) {
+			$m[ count( $m ) - 1 ]['breite'] = (int) $meta['width'];
+			$m[ count( $m ) - 1 ]['hoehe']  = (int) $meta['height'];
+		}
+		if ( $uid ) {
+			$m[ count( $m ) - 1 ]['brizy_uid'] = $uid;
+		}
 	}
 	return array( 'gesamt' => (int) $q->found_posts, 'medien' => $m );
 }
@@ -2319,12 +2328,43 @@ function vljcr_w_bild_hochladen( $args ) {
 	if ( ! empty( $args['alt'] ) ) {
 		update_post_meta( $mid, '_wp_attachment_image_alt', sanitize_text_field( (string) $args['alt'] ) );
 	}
-	return array(
+	$erg = array(
 		'meldung'   => 'Datei hochgeladen (Medien-ID ' . $mid . ').',
 		'medien_id' => $mid,
 		'url'       => wp_get_attachment_url( $mid ),
 		'typ'       => get_post_mime_type( $mid ),
 	);
+	$meta = wp_get_attachment_metadata( $mid );
+	if ( is_array( $meta ) && ! empty( $meta['width'] ) ) {
+		$erg['breite'] = (int) $meta['width'];
+		$erg['hoehe']  = (int) $meta['height'];
+	}
+	// Für den Baukasten (Brizy): Bilder werden dort über eine eigene Kennung angesprochen (?brizy_media=<uid>).
+	$uid = vljcr_brizy_uid_anlegen( $mid, $ext );
+	if ( $uid ) {
+		$erg['brizy_uid'] = $uid;
+	}
+	return $erg;
+}
+
+/** Legt für ein Bild die Brizy-Kennung an (gleiches Format wie vorhandene Kennungen), falls Brizy aktiv ist. */
+function vljcr_brizy_uid_anlegen( $mid, $ext ) {
+	if ( ! defined( 'BRIZY_VERSION' ) && ! class_exists( 'Brizy_Editor' ) ) {
+		return '';
+	}
+	$vorhanden = get_post_meta( $mid, 'brizy_attachment_uid', true );
+	if ( $vorhanden ) {
+		return $vorhanden;
+	}
+	global $wpdb;
+	$beispiel = (string) $wpdb->get_var( "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = 'brizy_attachment_uid' LIMIT 1" );
+	$uid      = 'wp-' . md5( $mid . microtime() . wp_generate_password( 8, false, false ) );
+	if ( '' === $beispiel || preg_match( '/\.[a-z0-9]{2,5}$/i', $beispiel ) ) {
+		$datei_ext = strtolower( (string) pathinfo( (string) get_attached_file( $mid ), PATHINFO_EXTENSION ) );
+		$uid      .= '.' . ( $datei_ext ? $datei_ext : strtolower( (string) $ext ) );
+	}
+	update_post_meta( $mid, 'brizy_attachment_uid', $uid );
+	return $uid;
 }
 
 function vljcr_w_beitragsbild_setzen( $args ) {
