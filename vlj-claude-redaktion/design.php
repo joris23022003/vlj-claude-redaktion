@@ -70,9 +70,57 @@ add_action(
 				$m[ (string) $name ] = base64_encode( strrev( (string) $adr ) );
 			}
 		}
-		wp_add_inline_script( 'vljcr-design', 'window.VLJ_CFG=' . wp_json_encode( array( 'm' => (object) $m ) ) . ';', 'before' );
+		$weiss  = wp_get_attachment_url( 430 );
+		$vorsitz = wp_get_attachment_image_src( 704, 'medium' );
+		$cfg     = array(
+			'm'         => (object) $m,
+			'logoWeiss' => $weiss ? $weiss : '',
+			'bilder'    => array( 'vorsitz' => $vorsitz ? $vorsitz[0] : '' ),
+			'profile'   => (object) vljcr_design_profile(),
+		);
+		wp_add_inline_script( 'vljcr-design', 'window.VLJ_CFG=' . wp_json_encode( $cfg, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . ';', 'before' );
 	},
 	99
+);
+
+// Kurzbiografien und LinkedIn der Vorstandsmitglieder (Option vljcr_vorstand_profile, sonst diese Voreinstellung).
+function vljcr_design_profile() {
+	$p = get_option( 'vljcr_vorstand_profile', null );
+	if ( is_array( $p ) ) {
+		return $p;
+	}
+	return array(
+		'Prof. Dr. Stefan Birkner' => array(
+			'linkedin' => 'https://www.linkedin.com/in/stefan-birkner-978373111',
+			'bio'      => 'Stefan Birkner studierte Rechtswissenschaften in Hannover und wurde an der Europa-Universität Viadrina in Frankfurt (Oder) promoviert. Er war Staatsanwalt und Richter, später Staatssekretär und von 2012 bis 2013 Niedersächsischer Minister für Umwelt, Energie und Klimaschutz. Dem Niedersächsischen Landtag gehörte er bis 2022 an.',
+		),
+		'Henning Schröder'         => array( 'linkedin' => 'https://www.linkedin.com/in/henning-schr%C3%B6der-84aa7b1' ),
+		'Dr. Frank Rozanski'       => array( 'linkedin' => 'https://www.linkedin.com/in/dr-frank-rozanski' ),
+		'Dr. Johannes Kevekordes'  => array( 'linkedin' => 'https://www.linkedin.com/in/johannes-kevekordes-4814b488' ),
+		'Niklas Drexler'           => array(
+			'linkedin' => 'https://www.linkedin.com/in/niklas-drexler-442012170',
+			'bio'      => 'Niklas Drexler ist Referent im Bundesministerium der Justiz und für Verbraucherschutz und dort im Telekommunikations- und Medienrecht tätig.',
+		),
+		'Joris Stietenroth'        => array(
+			'linkedin' => 'https://www.linkedin.com/in/joris-stietenroth',
+			'bio'      => 'Joris Stietenroth studiert Rechtswissenschaften und gehört dem Vorstand als Beisitzer an. Er betreut die Website der VLJ Niedersachsen.',
+		),
+	);
+}
+
+// Früh im Kopf: Seite bis zum Aufbau verbergen, Sicherheitsnetz nach 2,5 Sekunden.
+add_action(
+	'wp_head',
+	function () {
+		if ( ! vljcr_design_seite() ) {
+			return;
+		}
+		$f = plugin_dir_url( __FILE__ ) . 'assets/fonts/';
+		echo '<link rel="preload" href="' . esc_url( $f . 'roboto-latin-400-normal.woff2' ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
+		echo '<link rel="preload" href="' . esc_url( $f . 'roboto-latin-700-normal.woff2' ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
+		echo "<script>document.documentElement.classList.add('vlj-ui');setTimeout(function(){var h=document.documentElement;if(!h.classList.contains('vlj-fertig'))h.classList.remove('vlj-ui')},2500);</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput
+	},
+	1
 );
 
 // Versionsangabe an den eigenen Dateien erhalten (die Website entfernt ?ver= sonst), damit Browser neue Stände laden.
