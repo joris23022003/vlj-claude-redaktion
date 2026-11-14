@@ -79,16 +79,19 @@ html{scroll-behavior:smooth}
 .vlj-ui .vlj-card:hover{transform:translateY(-6px);box-shadow:var(--vlj-sh2)}
 .vlj-soft>.brz-section__content>.brz-bg>.brz-bg-color{background-color:var(--vlj-soft)!important}
 .vlj-wert>.brz-bg{display:none!important}
-.vlj-wert>.brz-column__items{position:relative;margin:14px!important;padding:34px 30px!important;border:0!important;background:#fff;border-radius:var(--vlj-r);box-shadow:var(--vlj-sh);transition:transform .35s var(--vlj-ease),box-shadow .35s var(--vlj-ease)}
+.vlj-wert{padding:14px!important;box-sizing:border-box}
+.vlj-wert>.brz-column__items{position:relative;margin:0!important;height:auto!important;flex:1 1 auto;padding:34px 30px!important;border:0!important;background:#fff;border-radius:var(--vlj-r);box-shadow:var(--vlj-sh);transition:transform .35s var(--vlj-ease),box-shadow .35s var(--vlj-ease)}
 .vlj-ui .vlj-wert:hover>.brz-column__items{transform:translateY(-6px);box-shadow:var(--vlj-sh2)}
 .vlj-wert>.brz-column__items::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;border-radius:var(--vlj-r) var(--vlj-r) 0 0;background:var(--vlj-akzent,var(--vlj-hell))}
 .vlj-soft>.brz-section__content{padding-top:50px!important;padding-bottom:50px!important}
 .vlj-soft+.vlj-soft>.brz-section__content{padding-top:0!important}
+.vlj-soft:has(+.vlj-soft)>.brz-section__content{padding-bottom:0!important}
+.vlj-soft .brz-row__container:has(.vlj-wert){margin:0!important;padding:0!important}
 .vlj-weg{display:none!important}
 .vlj-news{border-radius:var(--vlj-r);overflow:hidden}
 .vlj-news>.brz-bg>.brz-bg-color{background-color:var(--vlj-blau)!important}
 .vlj-news>.brz-column__items{padding:40px 46px!important}
-@media (max-width:767px){.vlj-news>.brz-column__items{padding:28px 22px!important}.vlj-wert>.brz-column__items{padding:26px 22px!important;margin:8px 0!important}}
+@media (max-width:767px){.vlj-news>.brz-column__items{padding:28px 22px!important}.vlj-wert>.brz-column__items{padding:26px 22px!important}.vlj-wert{padding:12px 0!important}}
 
 /* ---------- Teaser „Nächster Termin" (Startseite) ---------- */
 .vlj-teaser-sektion{background:#fff;padding:10px 0 34px;margin:0}
