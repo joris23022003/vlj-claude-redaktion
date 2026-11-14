@@ -457,3 +457,19 @@ html.vlj-fertig{scroll-behavior:smooth;scroll-padding-top:calc(var(--v-kopf-h) +
  .v-par{break-inside:avoid}
 }
 .v-app,.v-app *{font-family:var(--v-schrift)!important}
+
+/* Touch-Geräte: Hover-Zustände nicht „hängen“ lassen */
+@media (hover:none){
+ .v-knopf:hover{background:var(--v-magenta)}
+ .v-knopf.v-umriss:hover{background:transparent;color:var(--v-tief)!important}
+ .v-knopf.v-hell-umriss:hover{background:transparent;color:#fff!important}
+ .v-knopf.v-text-link:hover{background:none}
+ .v-knopf.v-text-link:hover svg,.v-person:hover .v-mehr svg,.v-profil-navi a:hover svg{transform:none}
+ .v-person:hover .v-foto img,.v-galerie-bild:hover img{transform:none}
+ .v-person:hover .v-film{opacity:.55}
+ .v-person:hover .v-name{color:var(--v-tief)}
+ .v-nav a:not(.v-knopf):hover::after{transform:scaleX(0)}
+ .v-par > summary:hover{background:none}
+ .v-oben:hover{background:var(--v-tief)!important}
+ .v-link-knopf:hover{text-decoration:none!important}
+}

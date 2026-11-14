@@ -97,13 +97,10 @@ function vljcr_design_profile() {
 		'Henning Schröder'         => array( 'linkedin' => 'https://www.linkedin.com/in/henning-schr%C3%B6der-84aa7b1' ),
 		'Dr. Frank Rozanski'       => array( 'linkedin' => 'https://www.linkedin.com/in/dr-frank-rozanski' ),
 		'Dr. Johannes Kevekordes'  => array( 'linkedin' => 'https://www.linkedin.com/in/johannes-kevekordes-4814b488' ),
-		'Niklas Drexler'           => array(
-			'linkedin' => 'https://www.linkedin.com/in/niklas-drexler-442012170',
-			'bio'      => 'Niklas Drexler ist Referent im Bundesministerium der Justiz und für Verbraucherschutz und dort im Telekommunikations- und Medienrecht tätig.',
-		),
+		'Niklas Drexler'           => array( 'linkedin' => 'https://www.linkedin.com/in/niklas-drexler-442012170' ),
 		'Joris Stietenroth'        => array(
 			'linkedin' => 'https://www.linkedin.com/in/joris-stietenroth',
-			'bio'      => 'Joris Stietenroth studiert Rechtswissenschaften und gehört dem Vorstand als Beisitzer an. Er betreut die Website der VLJ Niedersachsen.',
+			'bio'      => 'Joris Stietenroth studiert seit 2023 Rechtswissenschaft an der Universität Hamburg. Er arbeitet in einer Steuerberatungskanzlei und am Lehrstuhl für Europa- und Völkerrecht. Seit 2025 ist er Landesvorsitzender der Jungen Liberalen Niedersachsen.',
 		),
 	);
 }
