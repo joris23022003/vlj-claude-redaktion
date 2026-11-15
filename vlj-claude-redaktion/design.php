@@ -93,9 +93,12 @@ function vljcr_design_profile() {
 		'Prof. Dr. Stefan Birkner' => array(
 			'foto'     => array( 'x' => '4.5%', 's' => 1.1 ),
 			'linkedin' => 'https://www.linkedin.com/in/stefan-birkner-978373111',
-			'bio'      => 'Stefan Birkner studierte Rechtswissenschaften in Hannover und wurde an der Europa-Universität Viadrina in Frankfurt (Oder) promoviert. Er war Staatsanwalt und Richter, später Staatssekretär und von 2012 bis 2013 Niedersächsischer Minister für Umwelt, Energie und Klimaschutz. Dem Niedersächsischen Landtag gehörte er bis 2022 an.',
+			'bio'      => 'Stefan Birkner studierte Rechtswissenschaften in Hannover und wurde an der Europa-Universität Viadrina in Frankfurt (Oder) promoviert. Er war Staatsanwalt und Richter, später Staatssekretär und von 2012 bis 2013 Niedersächsischer Minister für Umwelt, Energie und Klimaschutz. Dem Niedersächsischen Landtag gehörte er bis 2022 an. Heute ist er Professor für Öffentliches Recht an der Hochschule Osnabrück und als Rechtsanwalt tätig.',
 		),
-		'Thomas Pfleiderer'        => array( 'gx' => 0.54 ),
+		'Thomas Pfleiderer'        => array(
+			'gx'  => 0.54,
+			'bio' => 'Thomas Pfleiderer war 40 Jahre in der Strafjustiz tätig. Nach Stationen am Landgericht Bückeburg, am Amtsgericht Rinteln und bei der Staatsanwaltschaft Hannover war er vier Jahre an den Generalbundesanwalt in Karlsruhe abgeordnet und sieben Jahre bei der Generalstaatsanwaltschaft Celle tätig. Danach leitete er die Staatsanwaltschaften Bückeburg und Hildesheim. Seit 2019 ist er ehrenamtlich Niedersächsischer Landesbeauftragter für Opferschutz.',
+		),
 		'Dr. Frederike Alt'        => array( 'gx' => 0.479 ),
 		'Henning Schröder'         => array(
 			'gx'       => 0.55,
