@@ -96,6 +96,7 @@ function vljcr_design_profile() {
 			'bio'      => 'Stefan Birkner studierte Rechtswissenschaften in Hannover und wurde an der Europa-Universität Viadrina in Frankfurt (Oder) promoviert. Er war Staatsanwalt und Richter, später Staatssekretär und von 2012 bis 2013 Niedersächsischer Minister für Umwelt, Energie und Klimaschutz. Dem Niedersächsischen Landtag gehörte er bis 2022 an.',
 		),
 		'Thomas Pfleiderer'        => array( 'gx' => 0.54 ),
+		'Dr. Frederike Alt'        => array( 'gx' => 0.479 ),
 		'Henning Schröder'         => array( 'gx' => 0.55, 'linkedin' => 'https://www.linkedin.com/in/henning-schr%C3%B6der-84aa7b1' ),
 		'Dr. Frank Rozanski'       => array( 'gx' => 0.552, 'linkedin' => 'https://www.linkedin.com/in/dr-frank-rozanski' ),
 		'Dr. Johannes Kevekordes'  => array( 'gx' => 0.584, 'linkedin' => 'https://www.linkedin.com/in/johannes-kevekordes-4814b488' ),
