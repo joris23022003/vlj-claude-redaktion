@@ -49,6 +49,8 @@ function sauber(node){
   });
  })(c);
  Array.prototype.slice.call(c.attributes).forEach(function(a){c.removeAttribute(a.name)});
+ // Zahl und Einheit nie trennen (20 €, 5 %, § 3)
+ var tw=d.createTreeWalker(c,4),n;while((n=tw.nextNode()))n.nodeValue=n.nodeValue.replace(/(\d)[ \t]+(€|%)/g,'$1\u00a0$2').replace(/(§§?)[ \t]+(\d)/g,'$1\u00a0$2');
  return c;
 }
 function absaetze(rt){return $$('p,h1,h2,h3,h4,h5,h6,ul,ol',rt).filter(function(p){return !p.parentNode.closest('p,ul,ol')&&txt(p)})}
