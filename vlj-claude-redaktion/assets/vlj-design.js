@@ -303,7 +303,7 @@ function mitglied(){
   if(/^Satzung$/.test(t)){satzKopf=p;i=3;return}
   if(i===0&&/^Wie hoch ist/.test(t)){i=1}
   if(i===0){intro.push(p);return}
-  if(i===1){if($('a[href$=".pdf"]',p)){pdf=p;i=2;return}beitrag.push(p);return}
+  if(i===1){if($('a[href$=".pdf"],a[href*="liberalejuristen.de/mitmachen"]',p)){pdf=p;i=2;return}beitrag.push(p);return}
   if(i===2){hinweis=p;return}
   if(i===3){if(!satzDatum&&/^vom\s/.test(t)){satzDatum=p;return}satzung.push(p)}
  });
@@ -318,7 +318,7 @@ function mitglied(){
  g.appendChild(links);
  var box=el('aside','v-beitritt');
  beitrag.forEach(function(p,k){var c=sauber(p);if(k===0){var h=el('h2','v-beitritt-frage',c.innerHTML);box.appendChild(h)}else box.appendChild(c)});
- if(pdf){var a=$('a',pdf);var k=knopf('Aufnahmeantrag (PDF)',a.href,'v-voll',I.pdf);k.target='_blank';k.rel='noopener';k.setAttribute('aria-label',txt(a));box.appendChild(k)}
+ if(pdf){var a=$('a',pdf),istPdf=/\.pdf(\?|$)/i.test(a.href);var k=istPdf?knopf('Aufnahmeantrag (PDF)',a.href,'v-voll',I.pdf):knopf(txt(a),a.href,'v-voll',I.pfeil);k.target='_blank';k.rel='noopener';if(istPdf)k.setAttribute('aria-label',txt(a));box.appendChild(k)}
  if(hinweis)box.appendChild(el('p','v-klein',esc(txt(hinweis))));
  g.appendChild(box);w.appendChild(g);
  // Satzung

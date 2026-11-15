@@ -97,7 +97,11 @@ function vljcr_design_profile() {
 		),
 		'Thomas Pfleiderer'        => array( 'gx' => 0.54 ),
 		'Dr. Frederike Alt'        => array( 'gx' => 0.479 ),
-		'Henning Schröder'         => array( 'gx' => 0.55, 'linkedin' => 'https://www.linkedin.com/in/henning-schr%C3%B6der-84aa7b1' ),
+		'Henning Schröder'         => array(
+			'gx'       => 0.55,
+			'linkedin' => 'https://www.linkedin.com/in/henning-schr%C3%B6der-84aa7b1',
+			'bio'      => 'Henning Schröder studierte nach einer dualen Ausbildung in der Industrie Rechtswissenschaften in Hannover. Er ist seit 2001 als Rechtsanwalt zugelassen. Er ist Fachanwalt für Handels- und Gesellschaftsrecht sowie für Steuerrecht. Darüber hinaus ist er seit 2024 Präsident des Niedersächsischen Anwalt- und Notarverbandes e.V.',
+		),
 		'Dr. Frank Rozanski'       => array( 'gx' => 0.552, 'linkedin' => 'https://www.linkedin.com/in/dr-frank-rozanski' ),
 		'Dr. Johannes Kevekordes'  => array( 'gx' => 0.584, 'linkedin' => 'https://www.linkedin.com/in/johannes-kevekordes-4814b488' ),
 		'Niklas Drexler'           => array( 'gx' => 0.526, 'linkedin' => 'https://www.linkedin.com/in/niklas-drexler-442012170' ),
