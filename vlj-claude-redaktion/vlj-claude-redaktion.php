@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       VLJ Claude Redaktion
  * Description:       Konnektor für Claude: Claude kann die Website lesen, Entwürfe anlegen, Seiten, Beiträge, Bilder und Menüs ändern. Zugang nur nach Anmeldung mit einem freigeschalteten Microsoft-Konto (Standard: stietenroth@julis-niedersachsen.de). Vor jeder Änderung wird der alte Stand gesichert; alles wird protokolliert.
- * Version:           1.6.15
+ * Version:           1.6.16
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Joris Stietenroth
@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'VLJCR_VERSION', '1.6.15' );
+define( 'VLJCR_VERSION', '1.6.16' );
 
 // Design-Upgrade der öffentlichen Seiten (Stile, Bedienung, Bildgrößen), ab 1.5.0.
 require_once __DIR__ . '/design.php';
@@ -2666,6 +2666,19 @@ function vljcr_cache_leeren() {
 	}
 	do_action( 'vljcr_cache_leeren' );
 }
+
+// Nach jedem Plugin-Update (automatisch, per Werkzeug oder von Hand) den Seiten-Cache leeren,
+// damit neue Inhalte aus design.php (z. B. Kurzbiografien) sofort sichtbar sind (ab 1.6.16).
+add_action(
+	'init',
+	function () {
+		if ( VLJCR_VERSION !== (string) get_option( 'vljcr_cache_version', '' ) ) {
+			update_option( 'vljcr_cache_version', VLJCR_VERSION, false );
+			vljcr_cache_leeren();
+		}
+	},
+	20
+);
 
 function vljcr_w_menue_aendern( $args ) {
 	if ( ! current_user_can( 'edit_theme_options' ) ) {
