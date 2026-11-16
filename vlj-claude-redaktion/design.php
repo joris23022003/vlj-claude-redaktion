@@ -106,7 +106,11 @@ function vljcr_design_profile() {
 			'bio'      => 'Henning Schröder studierte nach einer dualen Ausbildung in der Industrie Rechtswissenschaften in Hannover. Er ist seit 2001 als Rechtsanwalt zugelassen. Er ist Fachanwalt für Handels- und Gesellschaftsrecht sowie für Steuerrecht. Darüber hinaus ist er seit 2024 Präsident des Niedersächsischen Anwalt- und Notarverbandes e.V.',
 		),
 		'Dr. Frank Rozanski'       => array( 'gx' => 0.552, 'linkedin' => 'https://www.linkedin.com/in/dr-frank-rozanski' ),
-		'Dr. Johannes Kevekordes'  => array( 'gx' => 0.584, 'linkedin' => 'https://www.linkedin.com/in/johannes-kevekordes-4814b488' ),
+		'Dr. Johannes Kevekordes'  => array(
+			'gx'       => 0.584,
+			'linkedin' => 'https://www.linkedin.com/in/johannes-kevekordes-4814b488',
+			'bio'      => 'Johannes Kevekordes ist seit 42 Jahren Rechtsanwalt. Nach einem Praktikum bei der EU-Kommission in Brüssel war er zweieinhalb Jahre Rechtsanwalt in einer Großkanzlei in Düsseldorf. Nach einem Praktikum in einer Kanzlei an der Wall Street in New York war er sechs Jahre Syndikus in einem Industriekonzern im Ruhrgebiet. Seit 1993 ist er Rechtsanwalt in Hannover, seit 1996 Fachanwalt für Arbeitsrecht und seit 2003 Fachanwalt für Handels- und Gesellschaftsrecht. Von 2000 bis 2025 war er Notar.',
+		),
 		'Niklas Drexler'           => array( 'gx' => 0.526, 'linkedin' => 'https://www.linkedin.com/in/niklas-drexler-442012170' ),
 		'Joris Stietenroth'        => array(
 			'gx'       => 0.498,
